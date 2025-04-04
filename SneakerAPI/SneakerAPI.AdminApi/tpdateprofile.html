@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Profile</title>
+</head>
+<body>
+
+    <h2>Update Profile</h2>
+
+    <form id="updateForm">
+        <input type="hidden" id="staffId" value="15">  <!-- ID Nhân viên -->
+
+        <label>First Name:</label>
+        <input type="text" id="firstName"><br><br>
+        
+        <label>Last Name:</label>
+        <input type="text" id="lastName"><br><br>
+
+        <label>Phone:</label>
+        <input type="text" id="phone"><br><br>
+
+        <label>Avatar:</label>
+        <input type="file" id="avatar"><br><br>
+
+        <button type="submit">Update Profile</button>
+    </form>
+
+    <script>
+        document.getElementById("updateForm").addEventListener("submit", async function(event) {
+            event.preventDefault(); // Ngăn form reload trang
+
+            let formData = new FormData();
+
+            let staffId = document.getElementById("staffId").value;
+            let firstName = document.getElementById("firstName").value;
+            let lastName = document.getElementById("lastName").value;
+            let phone = document.getElementById("phone").value;
+            let avatarFile = document.getElementById("avatar").files[0];
+
+            // Thêm dữ liệu vào FormData
+            formData.append("StaffInfo__Id", staffId);
+            if (firstName) formData.append("StaffInfo__FirstName", firstName);
+            if (lastName) formData.append("StaffInfo__LastName", lastName);
+            if (phone) formData.append("StaffInfo__Phone", phone);
+            if (avatarFile) formData.append("File", avatarFile);
+
+            console.log("Sending data...", [...formData.entries()]); // Debug
+
+            try {
+                let response = await fetch("https://localhost:3000/Dashboard/StaffInfomation/profile-update", {
+                    method: "PATCH",
+                    body: formData
+                });
+
+                let result = await response.text();
+                if (response.ok) {
+                    alert("✅ Update successful: " + result);
+                } else {
+                    alert("❌ Error: " + result);
+                }
+            } catch (error) {
+                console.error("🚨 Request failed", error);
+                alert("🚨 Request failed: " + error.message);
+            }
+        });
+    </script>
+
+</body>
+</html>

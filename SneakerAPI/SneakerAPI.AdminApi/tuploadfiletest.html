@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Product Color Files</title>
+</head>
+<body>
+    <img src="https://localhost:3000/uploads/product-images/2ace0c755d306cfe1a0d434b00f2e6c9.jpg" width="200px" height="200px" srcset="">
+    <form action="" id="submitForm" enctype="multipart/form-data">
+        <input type="file"  id="fileInput" multiple>
+        <input type="text"  id="productColorId" placeholder="Enter Product Color ID">
+        <button id="uploadButton">Upload</button>
+    </form>
+    <script>
+ 
+ document.querySelector("#submitForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fileInput = document.querySelector("#fileInput");
+    const productColorIdInput = document.querySelector("#productColorId");
+    const files = Array.from(fileInput.files);
+    const productColorId = productColorIdInput.value.trim();
+    
+    if (!productColorId) {
+        alert("Please enter a Product Color ID");
+        return;
+    }
+
+    const formData = new FormData();
+    e.preventDefault();
+
+    files.forEach((file, index) => {
+        formData.append(`productColorFiles[${index}].ProductColorFile__File`, file);
+        // formData.append(`productColorFiles[${index}].ProductColorFile__Name`, file.name);
+        formData.append(`productColorFiles[${index}].ProductColorFile__ProductColorId`, productColorId);
+    });
+
+    // Xem trước dữ liệu FormData trong console
+    console.log("FormData preview: ");
+    for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
+
+
+        const response = await fetch("https://localhost:3000/api/ProductColorFile/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        alert(result)
+        console.log(result)
+        if (response.ok) {
+            console.log("Upload successful:", result);
+        } else {
+            console.error("Upload failed:", result);
+        }
+ 
+});
+   </script>
+</body>
+</html>

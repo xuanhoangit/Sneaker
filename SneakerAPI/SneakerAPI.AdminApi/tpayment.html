@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button onclick="createPaymentUrl(50000000, 'Thanh toán đơn hàng #123')">Thanh toán VNPay 500000</button>
+    <!-- <button onclick="checkPaymentStatus(123)">Kiểm tra thanh toán</button> -->
+
+
+
+<script>
+async function checkout(accountId, orderPayment, cartItems) {
+    const url = "https://localhost:4000/Customer/Order/checkout"; 
+
+    const data = {
+        accountId: accountId,  // 🔄 Chỉnh sửa key để khớp với DTO
+        orderPayment: orderPayment,  // 🔄 Chuyển đổi thành string
+        cartItemIds: cartItems
+    };
+
+    console.log("Sending data:", data);
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            console.log("Checkout thành công:", result);
+        } else {
+            console.error("Lỗi khi checkout:", result);
+        }
+    } catch (error) {
+        console.error("Lỗi kết nối API:", error);
+    }
+}
+
+
+
+    // Hàm tạo URL thanh toán và chuyển hướng người dùng đến VNPay
+async function createPaymentUrl(moneyToPay, description) {
+    try {
+        const ticks = Date.now() * 10101;
+        console.log(typeof(ticks))
+        const response = await fetch(`https://localhost:4000/Customer/Vnpay/CreatePaymentUrl?moneyToPay=${moneyToPay}&orderPayment=17601489303381944&description=${encodeURIComponent(description)}`, {
+            method: "GET"
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to create payment URL");
+        }
+
+        const paymentUrl = await response.text(); // Lấy URL thanh toán
+        // await checkout(15, ticks,[6]);
+        window.open(paymentUrl, '_blank'); // Chuyển hướng người dùng đến VNPay
+    } catch (error) {
+        console.error("Error creating payment URL:", error);
+        alert("Có lỗi xảy ra khi tạo URL thanh toán.");
+    }
+}
+
+// Hàm kiểm tra trạng thái thanh toán từ VNPay dựa trên orderId
+
+
+// Hàm xử lý Callback khi VNPay chuyển hướng người dùng về trang web
+async function handlePaymentCallback() {
+    try {
+        const response = await fetch(`https://localhost:4000/Customer/Vnpay/Callback`, {
+            method: "GET"
+        });
+
+        const result = await response.text();
+        console.log("Payment Callback Result:", result);
+        alert(result); // Hiển thị kết quả giao dịch cho người dùng
+    } catch (error) {
+        console.error("Error handling payment callback:", error);
+        alert("Có lỗi xảy ra khi xử lý kết quả thanh toán.");
+    }
+}
+
+
+
+// Tự động gọi hàm handlePaymentCallback() khi trang callback được load
+document.addEventListener("DOMContentLoaded", function () {
+    if (window.location.pathname.includes("https://localhost:4000/Customer/Vnpay/Callback")) { // Thay thế "payment-result" bằng URL callback thực tế của bạn
+        handlePaymentCallback();
+    }
+});
+
+</script>
+</body>
+</html>

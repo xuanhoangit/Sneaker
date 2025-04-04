@@ -1,0 +1,7 @@
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\bin\Debug\net8.0\CoverletSourceRootsMapping_SneakerAPI.Tests
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\obj\Debug\net8.0\SneakerAPI.Tests.csproj.AssemblyReference.cache
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\obj\Debug\net8.0\SneakerAPI.Tests.GeneratedMSBuildEditorConfig.editorconfig
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\obj\Debug\net8.0\SneakerAPI.Tests.AssemblyInfoInputs.cache
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\obj\Debug\net8.0\SneakerAPI.Tests.AssemblyInfo.cs
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\obj\Debug\net8.0\SneakerAPI.Tests.csproj.CoreCompileInputs.cache
+D:\Download\API\SneakerApi\sneakerApi\SneakerAPI\SneakerAPI.Tests\obj\Debug\net8.0\SneakerAPI.Tests.sourcelink.json

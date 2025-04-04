@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\SneakerAPI.AdminApi.props" />
+</Project>

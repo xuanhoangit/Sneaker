@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "Sig/MLbny5Z0uDc4p+rYWC/zmGVIEvAZikkdP8ZUx2s=",
+  "Source": "SneakerAPI.Api",
+  "BasePath": "_content/SneakerAPI.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "SneakerAPI.Api\\wwwroot",
+      "Source": "SneakerAPI.Api",
+      "ContentRoot": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Api\\wwwroot\\",
+      "BasePath": "_content/SneakerAPI.Api",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}
