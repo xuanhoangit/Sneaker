@@ -50,3 +50,4 @@ D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Infrastructure\obj\Debug\
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Infrastructure\obj\Debug\net8.0\SneakerAPI.Infrastructure.pdb
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Infrastructure\obj\Debug\net8.0\SneakerAPI.Infrastructure.genruntimeconfig.cache
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Infrastructure\obj\Debug\net8.0\ref\SneakerAPI.Infrastructure.dll
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Infrastructure\obj\Debug\net8.0\SneakerAPI.Infrastructure.sourcelink.json

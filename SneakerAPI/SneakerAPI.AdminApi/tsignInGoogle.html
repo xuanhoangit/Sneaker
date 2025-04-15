@@ -8,7 +8,8 @@
 </head>
 <body>
     <h2>Đăng nhập bằng Google</h2>
-
+    <button onclick="fetchCurrentUser()">setpass</button>
+    <button onclick="login()">Login</button>
     <!-- Google Login Button -->
     <div id="g_id_onload"
         data-client_id="429739552674-jgb94p4nggngssiksimcgqith8evpo98.apps.googleusercontent.com"
@@ -23,21 +24,22 @@
     </div>
 
     <script>
+
         function handleCredentialResponse(response) {
             console.log("Google Token:", response);
             console.log("cre:", response.credential);
 
             // Gửi token đến Backend (ASP.NET Core API)
-            fetch("https://localhost:7056/Client/api/Account/signin-google", {
+            fetch("https://localhost:4000/api/accounts/google-signin", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ credential: response.credential }) // Đảm bảo gửi đúng key
             })
             .then(async res => {
-                const data = await res.json();
+                 const token = await res.json();
+                 localStorage.setItem('authToken', token.accessToken); // Lưu token vào localStorage
+                
                 if (!res.ok) throw new Error(data.message || "Có lỗi xảy ra");
-                console.log(data.message, data.token);
-                alert(data.message, data.token);
             })
             .catch(error => {
                 console.error("Lỗi đăng nhập:", error);

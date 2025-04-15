@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "DUss+DNbvAk=",
+  "dgSpecHash": "xWN6LkmJl6g=",
   "success": true,
-  "projectFilePath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Tests\\SneakerAPI.Tests.csproj",
+  "projectFilePath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Tests\\SneakerAPI.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\WelCome To BVCN02\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\WelCome To BVCN02\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

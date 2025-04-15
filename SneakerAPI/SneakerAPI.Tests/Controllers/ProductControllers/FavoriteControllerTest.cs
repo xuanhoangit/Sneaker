@@ -37,7 +37,7 @@ using Xunit;
                 new Favorite { Favorite__Id = 2, Favorite__AccountId = 1, Favorite__IsDeleted = false }
             };
 
-            _mockUow.Setup(u => u.Favorite.GetAllAsync(It.IsAny<Expression<Func<Favorite, bool>>>()))
+            _mockUow.Setup(u => u.Favorite.GetAllAsync(It.IsAny<Expression<Func<Favorite, bool>>>(),It.IsAny<string>()))
                 .ReturnsAsync(favorites);
 
             // Act

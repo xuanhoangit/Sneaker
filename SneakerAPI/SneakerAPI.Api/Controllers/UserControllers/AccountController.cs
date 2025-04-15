@@ -24,6 +24,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
     public required string Credential { get; set; }
 }
     [ApiController]
+    [ApiExplorerSettings(IgnoreApi = true)]
     [Route("api/accounts")]
     public class AccountController : BaseController
     {   
@@ -59,18 +60,19 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             return Ok(CurrentUser());
         }          
     
-    [HttpGet("new-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] TokenResponse model)
+    [HttpPost("new-token")]
+    public async Task<IActionResult> RefreshToken( [FromBody]TokenResponse model)
     {   
         try
         {
  
-        var username = _refreshtoken.FirstOrDefault(predicate: x => x.Value == model.RefreshToken).Key;
+        var username = _refreshtoken.FirstOrDefault( x => x.Value == model.RefreshToken).Key;
+        System.Console.WriteLine(username);
         if (string.IsNullOrEmpty(username))
             return Unauthorized("Refresh Token is not valid!");
         var account=await _accountManager.FindByEmailAsync(username);
         var roles=await _accountManager.GetRolesAsync(account);
-        var newTokens = (TokenResponse)_jwtService.GenerateJwtToken(username,roles);
+        var newTokens = (TokenResponse)_jwtService.GenerateJwtToken(account,roles);
         
         // Cập nhật refresh token mới
         _refreshtoken[username] = newTokens.RefreshToken;
@@ -78,33 +80,42 @@ namespace SneakerAPI.Api.Controllers.UserControllers
         return Ok(newTokens);
                    
         }
-        catch (System.Exception)
+        catch (System.Exception ex)
         {
             
             throw;
         }
     }
 
-    private bool AutoCreateInfo(int account_id){
-        return _uow.CustomerInfo.Add(new CustomerInfo{
-                            CustomerInfo__AccountId=account_id,
-                            CustomerInfo__Avatar=HandleString.DefaultImage
-                        });
-    }
+        private bool AutoCreateInfo(int account_id){
+            return _uow.CustomerInfo.Add(new CustomerInfo{
+                                CustomerInfo__AccountId=account_id,
+                                CustomerInfo__Avatar=HandleString.DefaultImage
+                            });
+        }
+        //past
+        [Authorize(Roles = RolesName.Customer)]
         [HttpPatch("password-set")]
-        public async Task<IActionResult> SetPassword(ChangePasswordDto model)
+        public async Task<IActionResult> SetPassword([FromBody]ChangePasswordDto model)
         {
             try
             {
-            var currentAccount= (CurrentUser)CurrentUser();;
-                           
+            var currentAccount= CurrentUser() as CurrentUser;
+            if(currentAccount == null){
+                return Unauthorized();
+            }
+            System.Console.WriteLine("hahaha");
             if(model.ConfirmNewPassword != model.NewPassword)
                 return BadRequest("Your new password and confirm password do not match.");
+                           System.Console.WriteLine("email curenttttttttttt"+currentAccount.Email);
 
             var account = await _accountManager.FindByEmailAsync(currentAccount.Email);
+            System.Console.WriteLine("email curenttttttttttt"+currentAccount.Email);
             if (account == null)
                 return BadRequest("Anomalous behavior was detected"); 
-
+            if(!string.IsNullOrEmpty(account.PasswordHash))
+                // Nếu tài khoản chưa được thiết lập mật khẩu, trả về thông báo lỗi
+                return BadRequest("Your account has been set a password!");
             account.PasswordHash = _accountManager.PasswordHasher.HashPassword(account, model.NewPassword);
             var result=await _accountManager.UpdateAsync(account);
             // var result = await _accountManager.ChangePasswordAsync(account, model.Password, model.NewPassword);
@@ -118,12 +129,13 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             return BadRequest(result.Errors);
                     
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 
-                throw new Exception("An error has occurred while resetting password");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
+        //pass
         [HttpPost("google-signin")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
         {
@@ -139,9 +151,27 @@ namespace SneakerAPI.Api.Controllers.UserControllers
 
                 var account = await _accountManager.FindByEmailAsync(payload.Email);
 
-                if (account == null)
+                if (account != null)
                 {  
-                    var newAccount=new IdentityAccount{
+                       // Đăng nhập user vào hệ thống
+                        var roles=await _accountManager.GetRolesAsync(account);
+                        if(!roles.Contains(RolesName.Customer)){
+                            var rs=await _accountManager.AddToRoleAsync(account,RolesName.Customer);
+                            if(rs.Succeeded){
+                                //Auto create customer info
+                                if(_uow.CustomerInfo.FirstOrDefault(x=>x.CustomerInfo__AccountId==account.Id) == null)
+                                AutoCreateInfo(account.Id);
+                            }
+                        }
+                        await _signInManager.SignInAsync(account, isPersistent: true);
+                        var token = (TokenResponse)_jwtService.GenerateJwtToken(account,roles);
+                        // var currentAccount= CurrentUser() as CurrentUser;
+                        // System.Console.WriteLine(currentAccount);
+                        _refreshtoken[account.Email]=token.RefreshToken;
+                        return Ok(token);
+                }
+
+                 var newAccount=new IdentityAccount{
                         Email=payload.Email,
                         UserName=payload.Email,
                         EmailConfirmed=true
@@ -156,23 +186,16 @@ namespace SneakerAPI.Api.Controllers.UserControllers
 
                         await _emailSender.SendEmailAsync(newAccount.Email, "Notification",
                             EmailTemplateHtml.RenderEmailNotificationBody(newAccount.Email,"Login Notice", "You have just successfully logged into the Sneaker Luxury Store app."));
-                        return Ok(
-                                _jwtService.GenerateJwtToken(newAccount.UserName, new List<string> { RolesName.Customer })
-                               );
+                        var uri=new Uri($"{Request.Scheme}://{Request.Host}/api/accounts/google-signin");
+                        
+                        var token = (TokenResponse)_jwtService.GenerateJwtToken(newAccount,new List<string>{
+                            RolesName.Customer
+                        });
+                        // var currentAccount= CurrentUser() as CurrentUser;
+                        _refreshtoken[newAccount.Email]=token.RefreshToken;
+                        return Created(uri,token);
                     }
-                }
-
-                // Đăng nhập user vào hệ thống
-                var roles=await _accountManager.GetRolesAsync(account);
-                if(!roles.Contains(RolesName.Customer)){
-                    var result=await _accountManager.AddToRoleAsync(account,RolesName.Customer);
-                    if(result.Succeeded){
-                        //Auto create customer info
-                        AutoCreateInfo(account.Id);
-                    }
-                }
-                await _signInManager.SignInAsync(account, isPersistent: true);
-                return Ok(_jwtService.GenerateJwtToken(account.UserName,roles));
+                return BadRequest(new { error = "Google token is not valid!" });
             }
             catch (Exception ex)
             {
@@ -180,30 +203,21 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             }
         }
 
-
+        //pass
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto model)
         {
             try
             {
-            if(!ModelState.IsValid){
-                return BadRequest("Invalid your input");
-            } 
+
+            if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
+            {
+                return BadRequest("Email and password are required.");
+            }
             var accountExist = await _accountManager.FindByEmailAsync(model.Email);
             if (accountExist != null)
-            {   
-                var roles=await _accountManager.GetRolesAsync(accountExist);
-                if(roles.Contains(RolesName.Customer))
-                    return Ok("Email already exists. You are granted access as a customer");
-
-                if(!roles.Contains(RolesName.Customer)){
-                    var rs=await _accountManager.AddToRoleAsync(accountExist,RolesName.Customer);
-                    if(rs.Succeeded){
-                        //Auto create customer info
-                        AutoCreateInfo(accountExist.Id);
-                    }
-                }
-                return Ok("Email already exists. You are granted access as a customer");
+            {
+                return BadRequest("Email already exists.");
             }
             if (model.Password != model.PasswordComfirm)
             {
@@ -220,28 +234,26 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             var result = await _accountManager.CreateAsync(account, model.Password);
             if (result.Succeeded)
             {
-                await _accountManager.AddToRoleAsync(account, RolesName.Customer);
-                //Auto create customer info
-                AutoCreateInfo(account.Id);
                 // Sinh OTP và lưu vào MemoryCache (hết hạn sau 5 phút)
                 var otpCode = HandleString.GenerateVerifyCode();
                 _cache.Set(model.Email, otpCode, TimeSpan.FromMinutes(5));
 
                 // Gửi OTP qua email
                 await _emailSender.SendEmailAsync(model.Email, "Confirm email",
-                    EmailTemplateHtml.RenderEmailRegisterBody(model.Email, otpCode));
-                var uri=new Uri($"{Request.Scheme}://{Request.Host}/Customer/Account/register/{account.Email}");
-                return Created(uri, new { message = "User registered successfully",email=account.Email});
+                    EmailSenderHTML.EmailBody(otpCode));
+                var uri=new Uri($"{Request.Scheme}://{Request.Host}/api/accounts/register");
+                return Created(uri, new { message = "User registered successfully. Please check your email for verification code.",email=account.Email});
             }
             return BadRequest(result.Errors);
              }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 
                 throw new Exception("An error has occurred while registering");
             }
         }
-        [HttpGet("email-confirmation-resend")]
+        //pass
+        [HttpPost("request-otp")]
         public async Task<IActionResult> ResendEmailConfirmation(ResendOTPDto model)
         {   
             try
@@ -266,7 +278,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
 
                 // Gửi OTP qua email
                 await _emailSender.SendEmailAsync(model.Email, "Confirm email",
-                EmailTemplateHtml.RenderEmailRegisterBody(model.Email, otpCode));
+                EmailSenderHTML.EmailBody(otpCode));
                 return Ok("Please check your email for verification code.");
             }
 
@@ -274,12 +286,13 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             return BadRequest("Please try again in a few minutes.");
                  
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 
                 throw new Exception("An error has occurred while resending email confirmation");
             }
         }
+        //pass
         [HttpPatch("email-confirm")]
         public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto model)
         {   
@@ -302,30 +315,38 @@ namespace SneakerAPI.Api.Controllers.UserControllers
                 return BadRequest("Email does not exist.");
             }
 
-            if (account.EmailConfirmed)
-            {
-                return BadRequest("Email has been previously verified.");
-            }
+            // if (account.EmailConfirmed)
+            // {
+            //     return BadRequest("Email has been previously verified.");
+            // }
 
             // Cập nhật trạng thái xác thực email
             account.EmailConfirmed = true;
-            var a=await _accountManager.UpdateAsync(account);
-
+            var result=await _accountManager.UpdateAsync(account);
+            if(result.Succeeded){
+                var rs=await _accountManager.AddToRoleAsync(account,RolesName.Customer);
+                if(rs.Succeeded){
+                    //Auto create customer info
+                    AutoCreateInfo(account.Id);
+                }
             // Xóa OTP khỏi cache sau khi xác nhận thành công
             _cache.Remove(model.Email);
-
             return Ok("Email has been successfully verified!");
-                 
             }
-            catch (System.Exception)
+
+            return BadRequest("An error has occurred while confirming email");
+            // return BadRequest(result.Errors);  
+            }
+            catch (System.Exception ex)
             {
                 
                 throw new Exception("An error has occurred while confirming email");
             }
         }
         // Đăng nhập
+        // pass
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto model)
+        public async Task<IActionResult> Login([FromBody]LoginDto model)
         {
             try
             {
@@ -337,62 +358,85 @@ namespace SneakerAPI.Api.Controllers.UserControllers
 
           
             var roles=await _accountManager.GetRolesAsync(account);
-            if(!roles[0].Contains(RolesName.Customer))
-                return Unauthorized("User does not have access");
+            if(!roles.Contains(RolesName.Customer))
+                {
+                
+                if (_cache.TryGetValue(model.Email, out string storedOtp))
+                    return BadRequest("Please try again in a few minutes.");
+
+                var otpCode = HandleString.GenerateVerifyCode();
+                _cache.Set(model.Email, otpCode, TimeSpan.FromMinutes(5));
+
+                // Gửi OTP qua email
+                await _emailSender.SendEmailAsync(model.Email, subject: "Confirm email",
+                    EmailSenderHTML.EmailBody(otpCode));
+              
+                return BadRequest("To login as a customer. Please check your email for verification code.");
+            
+                }
 
             if (!await _accountManager.IsEmailConfirmedAsync(account))
                 return Unauthorized("Please confirm email before logging in.");
 
-            var result = await _signInManager.PasswordSignInAsync(account, model.Password, false, false);
+            var result = await _signInManager.PasswordSignInAsync(account, model.Password, true, false);
             if (result.Succeeded)
             {   
-                
-                return  Ok(_jwtService.GenerateJwtToken(account.UserName,roles));
+                var token = (TokenResponse)_jwtService.GenerateJwtToken(account,roles);
+                        _refreshtoken[account.Email]=token.RefreshToken;
+                return  Ok(token);
             }
             return BadRequest("Invalid login information.");
                      
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 
-                throw new Exception("An error has occurred while logging in");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-
+        
+        //pass
         [HttpPatch("password-forgot")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
         {
             try
             {
-         
+            // if (!ModelState.IsValid)
+            //     return BadRequest("Invalid your input");
+            if (string.IsNullOrEmpty(model.Email))
+                return BadRequest("Email is required");
+
             var account = await _accountManager.FindByEmailAsync(model.Email);
-            var role= await _accountManager.GetRolesAsync(account);
-            // if(!role.Contains(RolesName.Customer))
-            //     return BadRequest("You do not have access");
 
             if (account == null)
             {
                 // Không tiết lộ thông tin tài khoản có tồn tại hay không
                 return Ok("Password has been emailed to youuu");
             }
+            var isInRoleCustomer= await _accountManager.IsInRoleAsync(account,RolesName.Customer);
+            if (!isInRoleCustomer)
+                return BadRequest("User does not have access");
+
             var password = HandleString.GenerateRandomString(16);
             // cập nhật account với mật khẩu mới
             account.PasswordHash = _accountManager.PasswordHasher.HashPassword(account, password);
             await _accountManager.UpdateAsync(account);
 
-            await _emailSender.SendEmailAsync(model.Email, "Reset password",
-                EmailTemplateHtml.RenderEmailForgotPasswordBody(model.Email, password));
+            await _emailSender.SendEmailAsync(account.Email, "Reset password",
+                EmailSenderHTML.EmailBody("Your new password is: " + password));
             return Ok("Password has been emailed to you");
                    
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 
-                throw new Exception("An error has occurred while sending email");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
 
         // Đặt lại mật khẩu
+        // pass
+        [Authorize(Roles = RolesName.Customer)]
         [HttpPatch("password-change")]
         public async Task<IActionResult> ChangePassword(ChangePasswordDto model)
         {
@@ -420,10 +464,10 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             return BadRequest("Wrong account name or password");
                     
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 
-                throw new Exception("An error has occurred while resetting password");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
     }

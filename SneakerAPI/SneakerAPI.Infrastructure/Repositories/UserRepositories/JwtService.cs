@@ -16,18 +16,22 @@ public class JwtService : IJwtService
         {
         config = _config;
     }
-        public object GenerateJwtToken(string username, IList<string> roles)
+        public object GenerateJwtToken(IdentityAccount account, IList<string> roles)
         {
             try
             {
                 
             var jwtSettings = config.GetSection("JWT");
+            System.Console.WriteLine("jwtSettings"+jwtSettings["ValidIssuer"]);
+            System.Console.WriteLine("jwtSettings"+jwtSettings["ValidAudience"]);
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]));
+           
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, username),//Sub sẽ đại diện cho Identifier 
+                new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),//Sub sẽ đại diện cho Identifier 
+                new Claim(JwtRegisteredClaimNames.Email, account.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             foreach (var role in roles)
@@ -36,13 +40,12 @@ public class JwtService : IJwtService
             }
 
             var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
+                issuer: jwtSettings["ValidIssuer"],
+                audience: jwtSettings["ValidAudience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(15),
                 signingCredentials: credentials
             );
-            
             return new TokenResponse{
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
                     RefreshToken= Guid.NewGuid().ToString()

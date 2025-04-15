@@ -10,6 +10,7 @@ namespace SneakerAPI.Core.Models.ProductEntities
     {   
         [Key]
         public int Product__Id { get; set; }
+        public int Product__Sold {get;set;}
         [Required]
         public string? Product__Name { get; set; }
         public string? Product__Description { get; set; }
@@ -25,6 +26,6 @@ namespace SneakerAPI.Core.Models.ProductEntities
         [ForeignKey("Product__BrandId")]
         public  Brand? Brand { get; set; }
         // [NotMapped]
-        public virtual ICollection<ProductColor>? ProductColors { get; set; }
+        public virtual ICollection<ProductColor> ProductColors { get; set; }= new List<ProductColor>();
     }
 }

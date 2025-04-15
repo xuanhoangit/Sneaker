@@ -10,10 +10,13 @@ namespace SneakerAPI.Api.Controllers.UserControllers
 {
     [Route("api/users")]
     [ApiController]
+    //pass
+    [ApiExplorerSettings(IgnoreApi =true)]
     [Authorize(Roles = RolesName.Customer)]
     public class UserInformationController : BaseController
     {
         private readonly IUnitOfWork _uow;
+        private readonly string localStorage="uploads/avatars";
         private readonly string _uploadFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/avatars");
 
         public UserInformationController(IUnitOfWork uow) : base(uow)
@@ -33,7 +36,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
                 var customer = _uow.CustomerInfo.Get(currentAccount.AccountId);
                 if (customer == null)
                     return NotFound("User profile not found.");
-
+                customer.CustomerInfo__Avatar=$"{Request.Scheme}://{Request.Host}/{localStorage}/{customer.CustomerInfo__Avatar}";
                 return Ok(customer);
             }
             catch (Exception ex)
@@ -89,7 +92,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
                 var result = _uow.CustomerInfo.Update(customerInfo);
                 if (!result)
                     return BadRequest("Failed to update user profile.");
-
+                 customerInfo.CustomerInfo__Avatar=$"{Request.Scheme}://{Request.Host}/{localStorage}/{customerInfo.CustomerInfo__Avatar}";
                 return Ok(new { Message = "Profile updated successfully.", Data = customerInfo });
             }
             catch (Exception ex)

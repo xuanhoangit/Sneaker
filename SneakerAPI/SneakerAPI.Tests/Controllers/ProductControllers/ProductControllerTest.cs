@@ -7,6 +7,7 @@ using SneakerAPI.Core.Models.ProductEntities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Xunit;
 // using NUnit.Framework;
 
@@ -32,7 +33,7 @@ using Xunit;
                 new Product { Product__Id = 1, Product__Status = 1 },
                 new Product { Product__Id = 2, Product__Status = 1 }
             };
-            _mockUow.Setup(u => u.Product.GetAll(It.IsAny<Func<Product, bool>>()))
+            _mockUow.Setup(u => u.Product.GetAll(It.IsAny<Expression<Func<Product, bool>>>(), It.IsAny<string>()))
                 .Returns(products.AsQueryable());
 
             // Act
@@ -47,7 +48,7 @@ using Xunit;
         public void GetProductsByStatus_ShouldReturnNotFound_WhenNoProductsExist()
         {
             // Arrange
-            _mockUow.Setup(u => u.Product.GetAll(It.IsAny<Func<Product, bool>>()))
+            _mockUow.Setup(u => u.Product.GetAll(It.IsAny<Expression<Func<Product, bool>>>(), It.IsAny<string>()))
                 .Returns(Enumerable.Empty<Product>().AsQueryable());
 
             // Act
@@ -123,7 +124,7 @@ using Xunit;
         public void GetProductsByCategory_ShouldReturnOk_WhenProductsExist()
         {
             // Arrange
-            var category = new { CategoryId = 1 };
+            var category = new Category{ Category__Id = 1 };
             var productIds = new List<int> { 1, 2 };
             var products = new List<Product>
             {
@@ -132,9 +133,9 @@ using Xunit;
             };
 
             _mockUow.Setup(u => u.Category.Get(1)).Returns(category);
-            _mockUow.Setup(u => u.ProductCategory.GetAll(It.IsAny<Func<dynamic, bool>>()))
-                .Returns(productIds.Select(id => new { ProductCategory__ProductId = id }).AsQueryable());
-            _mockUow.Setup(u => u.Product.GetAll(It.IsAny<Func<Product, bool>>()))
+            _mockUow.Setup(u => u.ProductCategory.GetAll(It.IsAny<Expression<Func<ProductCategory, bool>>>(), null))
+                .Returns(productIds.Select(id => new ProductCategory { ProductCategory__ProductId = id }).AsQueryable());
+            _mockUow.Setup(u => u.Product.GetAll(It.IsAny<Expression<Func<Product, bool>>>(), It.IsAny<string>()))
                 .Returns(products.AsQueryable());
 
             // Act
@@ -149,7 +150,7 @@ using Xunit;
         public void GetProductsByCategory_ShouldReturnNotFound_WhenCategoryDoesNotExist()
         {
             // Arrange
-            _mockUow.Setup(u => u.Category.Get(1)).Returns((object)null);
+            _mockUow.Setup(u => u.Category.Get(1)).Returns((Category)null);
 
             // Act
             var result = _controller.GetProductsByCategory(1);
@@ -158,14 +159,14 @@ using Xunit;
             Assert.IsType<NotFoundObjectResult>(result);
         }
 
-        [Fact]
+        [Fact] //Có vẻ như đoạn này cần trả về kiểu dữ liệu khác
         public void GetProductsByCategory_ShouldReturnNotFound_WhenNoProductsExist()
         {
             // Arrange
-            var category = new { CategoryId = 1 };
+            var category = new Category { Category__Id = 1 };
             _mockUow.Setup(u => u.Category.Get(1)).Returns(category);
-            _mockUow.Setup(u => u.ProductCategory.GetAll(It.IsAny<Func<dynamic, bool>>()))
-                .Returns(Enumerable.Empty<dynamic>().AsQueryable());
+            _mockUow.Setup(u => u.ProductCategory.GetAll(It.IsAny<Expression<Func<ProductCategory, bool>>>(), It.IsAny<string>()))
+                .Returns(Enumerable.Empty<ProductCategory>().AsQueryable());
 
             // Act
             var result = _controller.GetProductsByCategory(1);

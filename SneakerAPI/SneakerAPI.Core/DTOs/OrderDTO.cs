@@ -1,9 +1,12 @@
+using SneakerAPI.Core.Models.UserEntities;
+
 namespace SneakerAPI.Core.DTOs;
 public class CheckoutOrderDTO
 {
     public int AccountId { get; set; }
     public long OrderPayment { get; set; }
     public int[] CartItemIds { get; set; }
+    public int AddressId {get;set;}
 }
 public class GetOrderDTO
 {
@@ -20,4 +23,5 @@ public class GetOrderDTO
         public int Order__PaymentMethod {get;set;}= (int)PaymentMethod.Cash_on_Delivery;
         public string? Order__Type {get;set;}//Mua on hay mua off
         public virtual List<GetOrderItemDTO>? OrderItems {get;set;}
+        public virtual Address? Address { get; set; }
 }

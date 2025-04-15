@@ -43,5 +43,10 @@ namespace SneakerAPI.Core.Models.OrderEntities
         public int Order__PaymentMethod {get;set;}= (int)PaymentMethod.Cash_on_Delivery;
         public string? Order__Type {get;set;}//Mua on hay mua off
         public virtual List<OrderItem>? OrderItems {get;set;}
+        public int Order__AddressId { get; set; }
+        [ForeignKey("Order__AddressId")]
+        public Address? Address { get; set; }
+        public string? OrderCode { get; set; }
+        
     }
 }

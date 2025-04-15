@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces.OrderInterfaces;
 using SneakerAPI.Core.Models.Filters;
+using SneakerAPI.Core.Models.GHN;
 using SneakerAPI.Core.Models.OrderEntities;
 using SneakerAPI.Infrastructure.Data;
 
@@ -13,6 +14,8 @@ public class OrderRepository :Repository<Order> ,IOrderRepository
     public OrderRepository(SneakerAPIDbContext db):base(db)
     {
     }
+
+
 
     public IQueryable<Order> GetOrderFiltered(OrderFilter filter)
     {   
@@ -61,10 +64,10 @@ public class OrderRepository :Repository<Order> ,IOrderRepository
         }
         return query;
     }
-    public async Task<List<GetRevenueByDayDto>> GetRevenueDaily(RangeDateTime rangeDateTime)
+    public async Task<List<GetRevenueByDayDto>> GetRevenueDaily(DateTime time)
     {
         var revenueData = await _dbSet
-            .Where(o => o.Order__CreatedDate >= rangeDateTime.From && o.Order__CreatedDate <= rangeDateTime.To)
+            .Where(o => o.Order__CreatedDate.Date == time.Date)
             .GroupBy(o => o.Order__CreatedDate.Date)
             .Select(g => new GetRevenueByDayDto
             {
@@ -75,19 +78,20 @@ public class OrderRepository :Repository<Order> ,IOrderRepository
 
         return revenueData;
     }
-    public async Task<List<GetRevenueByMonthDto>> GetRevenueMonthly(RangeDateTime rangeDateTime)
+    public async Task<List<GetRevenueByMonthDto>> GetRevenueMonthly(int month,int year)
 {
-    var revenueData = await _context.Orders
-        .Where(o => o.Order__CreatedDate >= rangeDateTime.From && o.Order__CreatedDate <= rangeDateTime.To)
-        .GroupBy(o => new { o.Order__CreatedDate.Year, o.Order__CreatedDate.Month }) // Nhóm theo năm + tháng
-        .Select(g => new GetRevenueByMonthDto
-        {
-            Year = g.Key.Year,
-            Month = g.Key.Month,
-            Revenue = g.Sum(o => o.Order__AmountDue)
-        })
-        .OrderBy(r => r.Year).ThenBy(r => r.Month)
-        .ToListAsync();
+  var revenueData = await _context.Orders
+    .Where(o => o.Order__CreatedDate.Year == year && o.Order__CreatedDate.Month == month)
+    .GroupBy(o => new { o.Order__CreatedDate.Year, o.Order__CreatedDate.Month }) // Nhóm theo năm + tháng
+    .Select(g => new GetRevenueByMonthDto
+    {
+        Year = g.Key.Year,
+        Month = g.Key.Month,
+        Revenue = g.Sum(o => o.Order__AmountDue)
+    })
+    .OrderBy(r => r.Year).ThenBy(r => r.Month)
+    .ToListAsync();
+
 
     return revenueData;
 }

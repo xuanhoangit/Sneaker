@@ -8,9 +8,10 @@ using SneakerAPI.Core.Interfaces;
 using SneakerAPI.Core.Models.UserEntities;
 
 namespace SneakerAPI.AdminApi.Controllers.ProductControllers
-{   
+{   //pass
     [Route("api/addresses")]
     [ApiController]
+    [ApiExplorerSettings(IgnoreApi =true)]
     [Authorize(Roles = RolesName.Customer)]
     public class AddressController : BaseController
     {
@@ -24,17 +25,16 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
         }
         
         [HttpGet("user-information/{userInformationId}/addresses")]
-        public async Task<IActionResult> GetAddresses(int userInformationId)
+        public async Task<IActionResult> GetAddresses()
         {
             try
             {   
                 var currentAccount = CurrentUser() as CurrentUser;
                 if (currentAccount == null)
                     return Unauthorized("User not authenticated.");
-                var _accountId=_uow.CustomerInfo.Get(userInformationId).CustomerInfo__AccountId;
-                if(_accountId!=currentAccount.AccountId)
-                    return Unauthorized();
-                var addresses = await _uow.Address.GetAllAsync(x => x.Address__CustomerInfo == userInformationId);
+                var uIfId=_uow.CustomerInfo.FirstOrDefault(x=>x.CustomerInfo__AccountId==currentAccount.AccountId).CustomerInfo__Id;
+            
+                var addresses = await _uow.Address.GetAllAsync(x => x.Address__CustomerInfo == uIfId);
 
                 if (addresses == null || !addresses.Any())
                 {
@@ -65,10 +65,10 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
             catch (Exception ex)
             {
                 // _logger.LogError(ex, "Error while fetching address with ID {Id}", id);
-                return StatusCode(500, new { error = "An internal server error occurred." });
+                return StatusCode(500, new { error = "An internal server error occurred." +ex.Message });
             }
         }
-
+        //pass
         [HttpPost("create")]
         public IActionResult CreateAddress([FromBody] AddressDTO addressDTO)
         {
@@ -81,15 +81,16 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
 
                 // Kiểm tra nếu đã có địa chỉ mặc định
                 var existingDefaultAddress = _uow.Address
-                    .GetFirstOrDefault(x => x.Address__IsDefault==true && x.Address__CustomerInfo == addressDTO.Address__CustomerInfo);
+                    .GetFirstOrDefault(x => x.Address__IsDefault==true && x.Address__CustomerInfo == addressDTO.Address__CustomerInfoId);
             
                 var address = _mapper.Map<Address>(addressDTO);
-
+                address.Address__CustomerInfo= addressDTO.Address__CustomerInfoId;
                 // Nếu chưa có địa chỉ mặc định, đặt địa chỉ này làm mặc định
                 address.Address__IsDefault = existingDefaultAddress == null;
 
-                _uow.Address.Add(address);
-
+                var result=_uow.Address.Add(address);
+                if(!result)
+                    return BadRequest(new { error = "Failed to create address" });
                 return CreatedAtAction(nameof(GetAddress), new { id = address.Address__Id }, address);
             }
             catch (Exception ex)
@@ -116,8 +117,8 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
                 }
 
                 // Cập nhật dữ liệu
-                if (!string.IsNullOrEmpty(addressDTO.Address__FullAddress))
-                    address.Address__FullAddress = addressDTO.Address__FullAddress;
+                if (!string.IsNullOrEmpty(addressDTO.Address__AddressDetail))
+                    address.Address__AddressDetail = addressDTO.Address__AddressDetail;
                 if (!string.IsNullOrEmpty(addressDTO.Address__Phone))
                     address.Address__Phone = addressDTO.Address__Phone;
                 if (!string.IsNullOrEmpty(addressDTO.Address__ReceiverName))

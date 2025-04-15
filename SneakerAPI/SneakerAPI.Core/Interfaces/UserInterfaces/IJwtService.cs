@@ -4,5 +4,5 @@ using SneakerAPI.Core.Models;
 
 public interface IJwtService 
 {
-    object GenerateJwtToken(string email, IList<string> roles);
+    object GenerateJwtToken(IdentityAccount account, IList<string> roles);
 }

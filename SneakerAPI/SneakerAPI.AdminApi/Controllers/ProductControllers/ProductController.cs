@@ -10,11 +10,11 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
 {   
     [ApiController]
     [Route("api/products")]
-    
+    [Authorize(Roles=$"{RolesName.Staff},{RolesName.Manager},{RolesName.Admin}")]
     public class GetProductDataController :BaseController
     {
         private readonly IUnitOfWork _uow;
-        private readonly int quanityProductInPage=20;
+        private readonly int unitInAPage=20;
         
         public GetProductDataController(IUnitOfWork uow):base(uow)
         {
@@ -23,16 +23,18 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
         [HttpGet("{status}/page/{page}")]
         public IActionResult GetProductsByStatus(int status,int page=1){
             try
-            {
+            {   
+                if(status==(int)Status.Deleted){
+                    return BadRequest("Status is not valid");
+                }
                 var products=
-                 _uow.Product.GetAll(x=>x.Product__Status==status).Skip((page-1)*quanityProductInPage).Take(quanityProductInPage);
+                 _uow.Product.GetAll(x=>x.Product__Status==status,"ProductColors").Skip((page-1)*unitInAPage).Take(unitInAPage);
                 if(products==null)
                 return NotFound("No results found");
                 return Ok(products);
             }
             catch (System.Exception e)
             {
-                
                 return BadRequest(e);
             }
         }
@@ -41,7 +43,7 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
             try
             {
        
-                var product = _uow.Product.Get(id);
+                var product = _uow.Product.FirstOrDefault(x=>x.Product__Id==id && x.Product__Status !=(int)Status.Deleted);
                 if(product==null)
                     return NotFound("Product not found");
                  return Ok(product);
@@ -58,7 +60,7 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
         public IActionResult GetProductsByFilter([FromQuery] ProductFilter filter,int page=1){
             try
             {   
-                var products= _uow.Product.GetFilteredProducts(filter).Skip((page-1)*quanityProductInPage).Take(quanityProductInPage).ToList();
+                var products= _uow.Product.GetFilteredProducts(filter).Where(x=>x.Product__Status!=(int)Status.Deleted).Skip((page-1)*unitInAPage).Take(unitInAPage).ToList();
                 if(products==null)
                 return NotFound("No results found");
                 return Ok(products);
@@ -83,7 +85,7 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
                 if(ids==null || ids.Count()<=0){
                     return NotFound("No results found");
                 }
-                var products=_uow.Product.GetAll(x=>ids.Contains(x.Product__Id)).Skip((page-1)*quanityProductInPage).Take(quanityProductInPage);
+                var products=_uow.Product.GetAll(x=>ids.Contains(x.Product__Id) && x.Product__Status !=(int)Status.Deleted).Skip((page-1)*unitInAPage).Take(unitInAPage);
                 return Ok(products);
             }
             catch (System.Exception e)
@@ -96,6 +98,7 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
 
     [ApiController]
     [Route("api/products")]
+    [Authorize(Roles=RolesName.Manager)]
     public class ActionProductController : BaseController
     {
         private readonly IUnitOfWork _uow;
@@ -120,13 +123,15 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
                     var p=_uow.Product.FirstOrDefault(x=>x.Product__Id==id && x.Product__Status==(int)Status.Unreleased);
                     if(p==null){
                         failed.Add($"No results found for product with ID = {id}");
+                        continue;
                     }
-                    else{
+                   
                         p.Product__Status=(int)Status.Released;
                         var result=_uow.Product.Update(p);
                         if(!result)
                         failed.Add($"Fail to publish product {p.Product__Name}");
-                    }
+
+                    
                 }
                 return !failed.Any()?Ok(new {Message="Published products successfully"}):Ok(failed);
             }
@@ -146,18 +151,24 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
             var failed=new List<string>();
             foreach (var id in ids)
             {   
-                var p=_uow.Product.FirstOrDefault(x=>x.Product__Id==id && x.Product__Status==(int)Status.Released);
+                var p=_uow.Product.GetFirstOrDefault(x=>x.Product__Id==id && x.Product__Status==(int)Status.Released,"ProductColors");
                 if(p==null)
                 {
                     failed.Add($"No results found for product with ID = {id}");
+                    continue;
                 }
-                else
-                {
+                
                     p.Product__Status=(int)Status.Unreleased;
                     var result=_uow.Product.Update(p);
+                    if(result){
+                        foreach (var pc in p.ProductColors)
+                        {
+                            pc.ProductColor__Status=(int)Status.Unreleased;
+                            _uow.ProductColor.Update(pc);
+                        }
+                    }
                     if(!result)
                     failed.Add($"Fail to stop publishing product {p.Product__Name}");
-                }
                    
             }
             return  !failed.Any()?Ok(new {Message="Stop publishing products successfully"}):Ok(failed);
@@ -175,6 +186,15 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
             {
                 if(!ModelState.IsValid){
                     return BadRequest(new {result=false,message="add product failed"});
+                }
+                var isExist=_uow.Product.FirstOrDefault(x=>x.Product__Name==productDto.Product__Name );
+                if(isExist!=null){
+                    if(isExist.Product__Status!= (int)Status.Deleted){
+                        return BadRequest("Product is already exist");
+                    }
+                    isExist.Product__Status=(int)Status.Unreleased;
+                    
+                    return Ok(new {result=_uow.Product.Update(isExist),message="added product successfully"});
                 }
                 var product=_mapper.Map<Product>(productDto);
                 var isSuccess=_uow.Product.Add(product);
@@ -210,12 +230,20 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
         public IActionResult Detele(int id){
             try
             {
-                var product=_uow.Product.Get(id);
+                var product=_uow.Product.GetFirstOrDefault(x=>x.Product__Id==id,"ProductColors");
                 //changeStatus
-                product.Product__Status=(int)Status.Blocked;
+                product.Product__Status=(int)Status.Deleted;
                 var isSuccess=_uow.Product.Update(product);
-                return isSuccess?Ok(new {result=isSuccess,message="deleted product successfully"})
-                :BadRequest(new {result=isSuccess,message="delete product failed"});
+                if(isSuccess){
+                   
+                        foreach (var pc in product.ProductColors)
+                        {
+                            pc.ProductColor__Status=(int)Status.Deleted;
+                            _uow.ProductColor.Update(pc);
+                        }
+                        return Ok(new {result=isSuccess,message="deleted product successfully"});
+                }
+                return BadRequest(new {result=isSuccess,message="delete product failed"});
             }
             catch (System.Exception e)
             {

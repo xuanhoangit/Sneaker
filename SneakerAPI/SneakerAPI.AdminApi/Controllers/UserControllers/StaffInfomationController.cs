@@ -10,14 +10,12 @@ using SneakerAPI.Core.Models.UserEntities;
 
 namespace SneakerAPI.Api.Controllers.UserControllers
 {   
-    [Area("Dashboard")]
-    [Route("[Area]/[controller]")]
+    [Route("api/information")]
     [ApiController]
-    [Authorize(Roles = RolesName.Staff)]
-    public class StaffInfomationController : BaseController
+       public class StaffInfomationController : BaseController
     {
         private readonly IUnitOfWork _uow;
-        
+        private readonly string localStorage="uploads/avatars";
         private readonly string uploadFilePath=Path.Combine(Directory.GetCurrentDirectory(),"wwwroot/uploads/avatars");
         
         public StaffInfomationController(IUnitOfWork uow) : base(uow)
@@ -26,22 +24,44 @@ namespace SneakerAPI.Api.Controllers.UserControllers
         }
 
         [HttpGet("profile")]
-        
+        [Authorize(Roles = RolesName.Admin)]
         public IActionResult GetStaffInfomation(int staffInfo)
         {
             try
-            {
-                var staff = _uow.StaffInfo.Find(x=>x.StaffInfo__AccountId==staffInfo);
+            {   
+                var staff = _uow.StaffInfo.FirstOrDefault(x=>x.StaffInfo__AccountId==staffInfo);
                 if(staff == null)
                 {
                     return NotFound("User profile not found");
                 }
+                staff.StaffInfo__Avatar=$"{Request.Scheme}://{Request.Host}/{localStorage}/{staff.StaffInfo__Avatar}";
                 return Ok(staff);
             }
             catch (System.Exception)
             {
                 
-                throw new Exception("An error occurred while getting user profile");
+                return StatusCode(500,"An error occurred while getting user profile");
+            }
+        }
+        [HttpGet("my-profile")]
+        [Authorize(Roles = $"{RolesName.Admin},{RolesName.Manager},{RolesName.Staff}")]
+        public IActionResult GetStaffInfomation()
+        {
+            try
+            {   
+                var currentAccount=CurrentUser() as CurrentUser;
+                var staff = _uow.StaffInfo.FirstOrDefault(x=>x.StaffInfo__AccountId==currentAccount.AccountId);
+                if(staff == null)
+                {
+                    return NotFound("User profile not found");
+                }
+                staff.StaffInfo__Avatar=$"{Request.Scheme}://{Request.Host}/{localStorage}/{staff.StaffInfo__Avatar}";
+                return Ok(staff);
+            }
+            catch (System.Exception)
+            {
+                
+                return StatusCode(500,"An error occurred while getting user profile");
             }
         }
         [HttpPatch("profile-update")]
@@ -80,11 +100,12 @@ namespace SneakerAPI.Api.Controllers.UserControllers
                 if(result){
                     var isSuccess=await HandleFile.Upload(staffInfoDTO.File,Path.Combine(uploadFilePath,_staffInfo.StaffInfo__Avatar));
                 }
-                return Ok("Updated profile successfully");
+                _staffInfo.StaffInfo__Avatar=$"{Request.Scheme}://{Request.Host}/{localStorage}/{_staffInfo.StaffInfo__Avatar}";
+                return Ok(new { Message = "Profile updated successfully.", Data = _staffInfo });
            }
            catch (System.Exception)
            {
-                return BadRequest("An error occurred while updating user profile");
+                return StatusCode(500,"An error occurred while updating user profile");
            }
         }
 

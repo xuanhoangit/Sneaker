@@ -20,7 +20,9 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity :class
         {
             return _dbSet.Find(id);
         }
-        
+        public DbSet<TEntity> GetQuery(){
+            return _dbSet;
+        }
         public TEntity GetFirstOrDefault(Expression<Func<TEntity, bool>> filter, string? includeProperties = null, bool tracked = true)
         {
             if (tracked)

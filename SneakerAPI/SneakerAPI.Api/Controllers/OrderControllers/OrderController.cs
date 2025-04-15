@@ -12,7 +12,9 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
 {   
     [ApiController]
     [Route("api/orders")]
-    // [Authorize(Roles = RolesName.Customer)]
+    [ApiExplorerSettings(IgnoreApi =true)]
+    [Authorize(Roles = RolesName.Customer)]
+    //pass 
     public class OrderController : BaseController
     {
         private readonly IUnitOfWork _uow;
@@ -25,7 +27,7 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
     
  
         [HttpGet("filter/page/{page}")]
-        public async Task<IActionResult> GetOrdersByFilter([FromBody] OrderFilter filter,int page=1)
+        public async Task<IActionResult> GetOrdersByFilter([FromQuery] OrderFilter filter,int page=1)
         {
             try
             {
@@ -50,7 +52,7 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
         }
        //Chi tiêu của cá nhân
         [HttpGet("user-spend")]
-        public IActionResult GetSpending([FromBody] RangeDateTime rangeDateTime)
+        public IActionResult GetSpending([FromQuery] RangeDateTime rangeDateTime)
         {
             try
             {
@@ -101,16 +103,12 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
                 if(order==null){
                     return NotFound();
                 }
-                if(
-                    order.Order__Status == (int)OrderStatus.Completed ||
-                    order.Order__Status == (int)OrderStatus.Delivering ||
-                    order.Order__Status == (int)OrderStatus.Delivered ){
+                if( order.Order__Status >= (int)OrderStatus.Delivering ){
                         //Không thể hủy
                         return Ok(new {message="Cannot cancel order. This order has been shipped"});
                 }
                 if(order.Order__PaymentStatus==(int)PaymentStatus.Unpaid ||
-                    order.Order__Status==(int)OrderStatus.Pending ||
-                    order.Order__Status==(int)OrderStatus.Processing){
+                  order.Order__Status < (int)OrderStatus.Delivering){
                         // Hủy ngay
                         order.Order__Status=(int)OrderStatus.Cancelled;
                         var result=_uow.Order.Update(order);
@@ -120,14 +118,12 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
                         return Ok(new {result,message="Order cancelled"});
                     }
                 if(order.Order__PaymentStatus==(int)PaymentStatus.Paid && 
-                    order.Order__Status != (int)OrderStatus.Completed &&
-                    order.Order__Status != (int)OrderStatus.Delivering &&
-                    order.Order__Status != (int)OrderStatus.Delivered){
+                    order.Order__Status < (int)OrderStatus.Delivering){
                     // HỦy và hoàn tiền
                     order.Order__Status=(int)OrderStatus.Cancelled;
                     order.Order__PaymentStatus=(int)PaymentStatus.Refunding;
                     var result=_uow.Order.Update(order);
-                    //Lấy ra list items để cập nhật lại số lượng sản phẩm
+                    //Lấy ra list items để cập nhật trả lại số lượng sản phẩm
                     var orderItems=await _uow.OrderItem.GetAllAsync(x=>x.OrderItem__OrderId==orderId);
                     await _uow.ProductColorSize.UpdateQuantity(orderItems);
                     return Ok(new {
@@ -163,7 +159,7 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
                 var order = new Order
                 {
                     Order__CreatedByAccountId = currentAccount.AccountId,
-                    Order__CreatedDate=DateTime.Now,
+                    Order__CreatedDate=DateTime.UtcNow,
                     Order__AmountDue = cartItems.Sum(c => c.ProductColor.ProductColor__Price * c.CartItem__Quantity),
                     OrderItems = cartItems.Select(c => new OrderItem
                     {
@@ -173,17 +169,23 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
                     Order__PaymentCode = checkoutDTO.OrderPayment,
                     Order__Type = Form_of_purchase.Online,
                     Order__Status = (int)OrderStatus.Pending,
-                    Order__PaymentStatus=(int)PaymentStatus.Unpaid
+                    Order__PaymentStatus=(int)PaymentStatus.Unpaid,
+                    Order__AddressId=checkoutDTO.AddressId
                 };
 
                 var result = _uow.Order.Add(order);
                 if (result)
                 {   
+                    var userIf=_uow.CustomerInfo.Get(currentAccount.AccountId);
                     foreach (var cs in cartItems)
                     {
                         var a=await _uow.ProductColorSize.OrderLock(cs.CartItem__ProductColorSizeId,cs.CartItem__Quantity);
                         System.Console.WriteLine(a);
+                         userIf.CustomerInfo__TotalSpent+=cs.CartItem__Quantity* cs.ProductColor.ProductColor__Price;
                     }
+                    //Cập nhật user totalspend
+                    _uow.CustomerInfo.Update(userIf);
+                   
                     // Cập nhật trạng thái giỏ hàng
                     _uow.CartItem.RemoveRange(_uow.CartItem.Find(x => checkoutDTO.CartItemIds.Contains(x.CartItem__Id)));
                     return Ok(new { Message = "Order placed successfully.", OrderId = order.Order__Id });

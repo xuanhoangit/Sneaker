@@ -20,9 +20,11 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
         {
             _uow = uow;
         }
-               //Chi tiêu của cá nhân
+        
+        //Chi tiêu của cá nhân
+        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin}")]
         [HttpGet("user-spend")]
-        public async Task<IActionResult> GetUserSpend([FromBody] RangeDateTime rangeDateTime,int accountId)
+        public async Task<IActionResult> GetUserSpend([FromQuery] RangeDateTime rangeDateTime,int accountId)
         {
             try
             {
@@ -43,19 +45,23 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-        [HttpGet("revenue-by-day")]
-        public async Task<IActionResult> GetRevenueByDay([FromBody] RangeDateTime rangeDateTime)
+        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin}")]
+        [HttpGet("monthly-revenue")]
+        public async Task<IActionResult> GetRevenueMonthly([FromQuery] int month, int year){
+            var result=await _uow.Order.GetRevenueMonthly(month,year);
+            return Ok(result);
+        }
+        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin}")]
+        [HttpGet("daily-revenue")]
+        public async Task<IActionResult> GetRevenueByDaily([FromQuery] DateTime time)
         {
             try
             {
-                var currentAccount = CurrentUser() as CurrentUser;
-                if (currentAccount == null)
-                    return Unauthorized("User not authenticated.");
-                if(rangeDateTime == null || rangeDateTime.From == null || rangeDateTime.To == null)
+                if(time==null)
                     return BadRequest("Invalid date range.");
-                if (rangeDateTime.From > rangeDateTime.To)
+                if (time > DateTime.Now)
                     return BadRequest("Invalid date range. From date must be before To date.");
-                var revenue = await _uow.Order.GetRevenueDaily(rangeDateTime);
+                var revenue = await _uow.Order.GetRevenueDaily(time);
                 return Ok(revenue);
             }
             catch (System.Exception ex)
@@ -64,17 +70,13 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
- 
+        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin},{RolesName.Staff}")]
         [HttpGet("filter/page/{page}")]
-        public async Task<IActionResult> GetOrdersByFilter([FromBody] OrderFilter filter,int page=1)
+        public async Task<IActionResult> GetOrdersByFilter([FromQuery] OrderFilter filter,int page=1)
         {
-            // var currentAccount = CurrentUser() as CurrentUser;
-            // if (currentAccount == null)
-            //     return Unauthorized("User not authenticated.");
             try
             {
             var orders =await _uow.Order.GetOrderFiltered(filter).Skip((page-1)*unitInAPage).Take(unitInAPage).ToListAsync();
-
             if (!orders.Any())
                 return NotFound("No orders found.");
 
@@ -87,7 +89,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-
+        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin},{RolesName.Staff}")]
         [HttpGet("{orderId}/items")]
         public async Task<IActionResult> GetOrderItems(int orderId)
         {
@@ -105,19 +107,14 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
             return Ok(orderItems);
         }
         [HttpPatch("cancel-order/{orderId:int?}")]
+        [Authorize(Roles=RolesName.Staff)]
         public async Task<IActionResult> CancelOrder(int orderId){
             try
             {   
-                // var currentAccount = CurrentUser() as CurrentUser;
-                // if (currentAccount == null)
-                //     return Unauthorized("User not authenticated.");
                 if(orderId<=0){
                     return NotFound("Order not found.");
                 }
                 var order=_uow.Order.Get(orderId);
-                // if(order.Order__CreatedByAccountId!=currentAccount.AccountId){
-                //     return Unauthorized("User not authorized to cancel this order.");
-                // }
                 if(order==null){
                     return NotFound();
                 }
@@ -157,6 +154,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
+        [Authorize(Roles=RolesName.Staff)]
         [HttpPost("checkout")]
         public async Task<IActionResult> Checkout([FromBody] CheckoutOrderDTO checkoutDTO)
         {
@@ -169,7 +167,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 if (checkoutDTO == null || checkoutDTO.CartItemIds == null || !checkoutDTO.CartItemIds.Any())
                     return BadRequest("Invalid cart items.");
 
-                var cartItems = await _uow.CartItem.GetCartItem(currentAccount.AccountId, checkoutDTO.CartItemIds);
+                var cartItems = await _uow.CartItem.GetCartItem(account_id: currentAccount.AccountId, checkoutDTO.CartItemIds);
 
                 if (!cartItems.Any())
                     return BadRequest("Cart is empty.");
@@ -186,7 +184,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                         OrderItem__Quantity = c.CartItem__Quantity,
                     }).ToList(),
                     Order__PaymentCode = checkoutDTO.OrderPayment,
-                    Order__Type = Form_of_purchase.Online,
+                    Order__Type = Form_of_purchase.Offline,
                     Order__Status = (int)OrderStatus.Pending,
                     Order__PaymentStatus=(int)PaymentStatus.Unpaid
                 };

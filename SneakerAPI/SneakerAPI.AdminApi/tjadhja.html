@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        async function fetchProvinces() {
+  const url = 'https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/province';
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Token': '070cb6e2-13c5-11f0-95d0-0a92b8726859'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Provinces:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching provinces:', error);
+  }
+}
+
+// Gọi hàm
+fetchProvinces();
+
+    </script>
+</body>
+</html>

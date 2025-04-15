@@ -63,6 +63,11 @@ public class ProductColorSizeRepository :Repository<ProductColorSize> ,IProductC
 
         // Giảm số lượng sản phẩm
         productCS.ProductColorSize__Quantity -= quantity;
+        var pc=_context.ProductColors.FirstOrDefault(x=>x.ProductColor__Id==productCS.ProductColorSize__ProductColorId);
+        pc.ProductColor__Sold+=quantity;
+        _context.Update(pc);
+        var p=_context.Products.FirstOrDefault(x=>x.Product__Id==pc.ProductColor__ProductId);
+        p.Product__Sold+=quantity;
         await _db.SaveChangesAsync();
 
         await transaction.CommitAsync();

@@ -75,6 +75,26 @@ protected override void OnModelCreating(ModelBuilder builder)
             .WithMany()
             .HasForeignKey(pcs => pcs.ProductColorSize__ProductColorId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Favorite>()
+            .HasOne(f => f.Product)
+            .WithMany()
+            .HasForeignKey(f => f.Favorite__ProductId)
+            .OnDelete(DeleteBehavior.NoAction);
+        builder.Entity<Order>()
+            .HasOne(f => f.Address)
+            .WithMany()
+            .HasForeignKey(f => f.Order__AddressId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<ProductColorSize>()
+        .HasOne(pcs => pcs.ProductColor)
+        .WithMany(pc => pc.ProductColorSizes)
+        .HasForeignKey(pcs => pcs.ProductColorSize__ProductColorId);
+        builder.Entity<ProductColorFile>()
+        .HasOne(pcf => pcf.ProductColor)
+        .WithMany(pc => pc.Images)
+        .HasForeignKey(pcs => pcs.ProductColorFile__ProductColorId);
     }
     
         //ORDERENTITIES

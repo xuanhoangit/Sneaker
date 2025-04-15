@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script>
+
+async function PostAdress(address){
+  try {
+
+    const response = await fetch('http://localhost:4000/api/addresses/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(address)
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      console.log('Tạo địa chỉ thành công:', result);
+    } else {
+      console.error('Lỗi từ API:', result);
+    }
+  }catch{}
+}
+    const token="070cb6e2-13c5-11f0-95d0-0a92b8726859"
+function getRandomProvince() {
+  return Math.floor(Math.random() * 63) + 1;
+}
+function getRandomUser() {
+  return Math.floor(Math.random() * 100) + 1;
+}
+function getRandomDistric(lenth) {
+  return Math.floor(Math.random() * lenth) + 1;
+}
+async function getDistricts(provinceId) {
+  const url = 'https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/district';
+
+  const response = await fetch(url, {
+    method: 'POST', // GHN yêu cầu phương thức POST, không phải GET
+    headers: {
+      'token': token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      province_id: provinceId
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data;
+}
+async function fetchWards(districtId) {
+  const url = 'https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/ward';
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'token': token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ district_id: districtId })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.code === 200) {
+      console.log('Danh sách phường:', data.data);
+      return data.data;
+    } else {
+      console.error('Lỗi từ API:', data.message || data);
+      return [];
+    }
+  } catch (error) {
+    console.error('Lỗi kết nối:', error);
+    return [];
+  }
+}
+
+// Sử dụng hàm
+
+function getProvince() {
+    fetch("https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/province", {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+    "token": token // Thay bằng token của bạn nếu khác
+  }
+})
+.then(response => response.json())
+.then(data => {
+  console.log("Danh sách tỉnh/thành:", data);
+  for(let i=1;i<1000;i++){
+
+    const address= {
+        Address__AddressDetail :"",
+        Address__Phone :0,
+        Address__IsDefault :false,
+        Address__WardCode :"",
+        Address__DistrictId:0 ,
+        Address__ProvinceName:"", 
+        Address__ReceiverName :"",
+        Address__CustomerInfo :0
+}
+    var random=getRandomProvince();
+    const province=data.data[random]
+    address.Address__ProvinceName=province.ProvinceName
+    address.Address__AddressDetail= province.ProvinceName
+    getDistricts(province.ProvinceID)
+        .then(data => {
+            const randomDictric=getRandomDistric(data.data.length)
+            address.Address__DistrictId=data.data[randomDictric].DistrictID
+            console.log(data.data[randomDictric])
+            address.Address__AddressDetail= data.data[randomDictric].DistrictName+", "+address.Address__AddressDetail
+            const ward=fetchWards(data.data[randomDictric].DistrictID).then(wards => {
+            // Duyệt qua danh sách phường nếu cần
+           {
+              const randomward=getRandomDistric(wards.length);
+              address.Address__WardCode=wards[randomward].WardCode;
+              address.Address__AddressDetail=wards[randomward].WardName+", "+address.Address__AddressDetail
+              address.Address__ReceiverName="MR A"
+              address.Address__Phone="0368154633"
+              address.Address__CustomerInfoId=getRandomUser()
+              sleep(1000)
+              PostAdress(address)
+            };
+          });
+            
+        })
+            
+        .catch(error => console.error('Lỗi:', error)); 
+  };
+
+})
+.catch(error => {
+  console.error("Lỗi khi gọi API GHN:", error);
+});
+
+}
+getProvince()
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+</script>
+</html>

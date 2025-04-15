@@ -261,6 +261,12 @@ namespace SneakerAPI.AdminApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Order__Id"));
 
+                    b.Property<string>("OrderCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Order__AddressId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Order__AmountDue")
                         .HasColumnType("decimal(18,2)");
 
@@ -286,6 +292,8 @@ namespace SneakerAPI.AdminApi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Order__Id");
+
+                    b.HasIndex("Order__AddressId");
 
                     b.HasIndex("Order__CreatedByAccountId");
 
@@ -389,6 +397,35 @@ namespace SneakerAPI.AdminApi.Migrations
                     b.ToTable("Colors");
                 });
 
+            modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.Favorite", b =>
+                {
+                    b.Property<int>("Favorite__Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Favorite__Id"));
+
+                    b.Property<int>("Favorite__AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Favorite__CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Favorite__IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Favorite__ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Favorite__Id");
+
+                    b.HasIndex("Favorite__AccountId");
+
+                    b.HasIndex("Favorite__ProductId");
+
+                    b.ToTable("Favorites");
+                });
+
             modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.Product", b =>
                 {
                     b.Property<int>("Product__Id")
@@ -412,6 +449,9 @@ namespace SneakerAPI.AdminApi.Migrations
                     b.Property<string>("Product__Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Product__Sold")
+                        .HasColumnType("int");
 
                     b.Property<int>("Product__Status")
                         .HasColumnType("int");
@@ -476,6 +516,9 @@ namespace SneakerAPI.AdminApi.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductColor__ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductColor__Sold")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductColor__Status")
@@ -609,19 +652,33 @@ namespace SneakerAPI.AdminApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Address__Id"));
 
+                    b.Property<string>("Address__AddressDetail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Address__CustomerInfo")
                         .HasColumnType("int");
 
-                    b.Property<string>("Address__FullAddress")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Address__DistrictId")
+                        .HasColumnType("int");
 
                     b.Property<bool?>("Address__IsDefault")
                         .HasColumnType("bit");
 
                     b.Property<string>("Address__Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Address__ProvinceName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Address__ReceiverName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Address__WardCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Address__Id");
@@ -771,6 +828,12 @@ namespace SneakerAPI.AdminApi.Migrations
 
             modelBuilder.Entity("SneakerAPI.Core.Models.OrderEntities.Order", b =>
                 {
+                    b.HasOne("SneakerAPI.Core.Models.UserEntities.Address", "Address")
+                        .WithMany()
+                        .HasForeignKey("Order__AddressId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("SneakerAPI.Core.Models.IdentityAccount", "Account")
                         .WithMany()
                         .HasForeignKey("Order__CreatedByAccountId")
@@ -778,6 +841,8 @@ namespace SneakerAPI.AdminApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
+
+                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("SneakerAPI.Core.Models.OrderEntities.OrderItem", b =>
@@ -797,6 +862,25 @@ namespace SneakerAPI.AdminApi.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("ProductColorSize");
+                });
+
+            modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.Favorite", b =>
+                {
+                    b.HasOne("SneakerAPI.Core.Models.IdentityAccount", "Account")
+                        .WithMany()
+                        .HasForeignKey("Favorite__AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SneakerAPI.Core.Models.ProductEntities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("Favorite__ProductId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.Product", b =>
@@ -857,7 +941,7 @@ namespace SneakerAPI.AdminApi.Migrations
             modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.ProductColorFile", b =>
                 {
                     b.HasOne("SneakerAPI.Core.Models.ProductEntities.ProductColor", "ProductColor")
-                        .WithMany()
+                        .WithMany("Images")
                         .HasForeignKey("ProductColorFile__ProductColorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -868,7 +952,7 @@ namespace SneakerAPI.AdminApi.Migrations
             modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.ProductColorSize", b =>
                 {
                     b.HasOne("SneakerAPI.Core.Models.ProductEntities.ProductColor", "ProductColor")
-                        .WithMany()
+                        .WithMany("ProductColorSizes")
                         .HasForeignKey("ProductColorSize__ProductColorId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -950,6 +1034,13 @@ namespace SneakerAPI.AdminApi.Migrations
             modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.Product", b =>
                 {
                     b.Navigation("ProductColors");
+                });
+
+            modelBuilder.Entity("SneakerAPI.Core.Models.ProductEntities.ProductColor", b =>
+                {
+                    b.Navigation("Images");
+
+                    b.Navigation("ProductColorSizes");
                 });
 #pragma warning restore 612, 618
         }

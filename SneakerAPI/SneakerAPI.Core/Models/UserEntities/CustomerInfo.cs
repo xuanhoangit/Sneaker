@@ -11,6 +11,9 @@ namespace SneakerAPI.Core.Models.UserEntities
         public int CustomerInfo__Id { get; set; }
         public string? CustomerInfo__FirstName { get; set; }
         public string? CustomerInfo__LastName { get; set; }
+        // public string? CustomerInfo__Ward { get; set; }
+        // public string? CustomerInfo__District { get; set; }
+        // public string? CustomerInfo__Province { get; set; }
         public string? CustomerInfo__Phone { get; set; }
         [DefaultValue(HandleString.DefaultImage)]
         public string? CustomerInfo__Avatar { get; set; }

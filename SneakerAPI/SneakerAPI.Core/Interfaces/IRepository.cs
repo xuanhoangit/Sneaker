@@ -1,8 +1,10 @@
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 namespace SneakerAPI.Core.Interfaces;
 public interface IRepository<TEntity> where TEntity : class 
-{
+{       
+        DbSet<TEntity> GetQuery();
         TEntity Get(int? id);
 
         TEntity GetFirstOrDefault(Expression<Func<TEntity, bool>> filter, string? includeProperties = null, bool tracked = true);

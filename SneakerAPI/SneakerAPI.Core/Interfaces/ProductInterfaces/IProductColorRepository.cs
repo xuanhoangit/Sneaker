@@ -1,4 +1,5 @@
 
+using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces;
 using SneakerAPI.Core.Models.ProductEntities;
 

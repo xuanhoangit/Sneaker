@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces;
@@ -8,6 +9,8 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
 {   
     [ApiController]
     [Route("api/cart-items")]
+    [ApiExplorerSettings(IgnoreApi =true)]
+    [Authorize(Roles=RolesName.Customer)]//pass
     public class CartItemController : BaseController
     {
         private readonly IUnitOfWork _uow;

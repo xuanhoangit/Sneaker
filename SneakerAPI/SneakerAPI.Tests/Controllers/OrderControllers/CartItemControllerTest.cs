@@ -37,13 +37,13 @@ public class CartItemControllerTest
             var currentAccount = new CurrentUser { AccountId = 1 };
             _controller.SetCurrentUser(currentAccount);
 
-            var cartItems = new List<CartItem>
+            var cartItems = new List<GetCartItemDTO>
             {
-                new CartItem { CartItem__Id = 1, CartItem__CreatedByAccountId = 1 },
-                new CartItem { CartItem__Id = 2, CartItem__CreatedByAccountId = 1 }
+                new GetCartItemDTO { CartItem__Id = 1, CartItem__CreatedByAccountId = 1 },
+                new GetCartItemDTO { CartItem__Id = 2, CartItem__CreatedByAccountId = 1 }
             };
 
-            _mockUow.Setup(u => u.CartItem.GetCartItem(1)).ReturnsAsync(cartItems);
+            _mockUow.Setup(u => u.CartItem.GetCartItem(1,null)).ReturnsAsync(cartItems);
 
             // Act
             var result = await _controller.GetUserCart();

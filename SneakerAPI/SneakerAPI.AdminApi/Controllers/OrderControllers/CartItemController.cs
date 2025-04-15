@@ -45,10 +45,9 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 var currentAccount = CurrentUser() as CurrentUser;
                 if (currentAccount == null)
                     return Unauthorized("User not authenticated.");
-
                 if (cartDTO == null)
                     return BadRequest("Invalid input data.");
-
+                // 5 Replace with currentAccount.AccountId
                 var existingItem = _uow.CartItem.FirstOrDefault(x =>
                     x.CartItem__CreatedByAccountId == currentAccount.AccountId &&
                     x.CartItem__ProductColorSizeId == cartDTO.CartItem__ProductColorSizeId);
@@ -62,7 +61,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 else
                 {
                     var newItem = _mapper.Map<CartItem>(cartDTO);
-                    newItem.CartItem__CreatedByAccountId = currentAccount.AccountId;
+                    newItem.CartItem__CreatedByAccountId = currentAccount.AccountId; // Replace with currentAccount.AccountId
 
                     if (_uow.CartItem.Add(newItem))
                         return Ok("Item added successfully.");

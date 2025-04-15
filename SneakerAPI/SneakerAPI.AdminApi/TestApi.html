@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<img id="img" src="https://d2j6dbq0eux0bg.cloudfront.net/images/66610504/2636936256.jpg" alt="" srcset="">    <script>
+        fetch("http://localhost:4000/api/users/profile")
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Lỗi khi gọi API: " + response.status);
+    }
+    return response.json();
+  })
+  .then(data => {
+    document.getElementById("img").src=data.customerInfo__Avatar;
+    console.log("Dữ liệu nhận được:", data);
+  })
+  .catch(error => {
+    console.error("Lỗi:", error);
+  });
+
+    </script>
+</body>
+</html>

@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using DotNetEnv;
 
+
 using SneakerAPI.AdminApi.Controllers.ProductControllers;
 using SneakerAPI.Core.Interfaces;
 using SneakerAPI.Infrastructure.Data;
@@ -15,9 +16,12 @@ using SneakerAPI.Core.Interfaces.UserInterfaces;
 using SneakerAPI.Infrastructure.Repositories.UserRepositories;
 using VNPAY.NET;
 
+
+
 var  AllowHostSpecifiOrigins = "_allowHostSpecifiOrigins";
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
+
 builder.Configuration
     .AddEnvironmentVariables()
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
@@ -43,6 +47,8 @@ builder.Services.AddScoped<IVnpay,Vnpay>();
 builder.Services.AddTransient<IUnitOfWork,UnitOfWork>();
 builder.Services.AddTransient<IEmailSender,EmailSender>();
 builder.Services.AddTransient<IJwtService,JwtService>();
+builder.Services.AddHttpClient();
+builder.Services.AddTransient<IGHN,GHN>();
 builder.Services.AddIdentity<IdentityAccount, IdentityRole<int>>()
     .AddEntityFrameworkStores<SneakerAPIDbContext>()
     .AddDefaultTokenProviders();
@@ -93,13 +99,23 @@ using (var scope = app.Services.CreateScope())
     try
     {   
         var uow = services.GetRequiredService<IUnitOfWork>();
-        await SeedRoleAdmin.InitializeAccount(services);
+        await SeedRoleAdmin.InitializeAccount(services,uow);
         await SeedRoleAdmin.InitBrand(uow);
         SeedRoleAdmin.InitColor(uow);
         SeedRoleAdmin.InitCategory(uow);
         SeedRoleAdmin.InitProductCategory(uow);
         SeedRoleAdmin.InitSize(uow);
+        SeedRoleAdmin.InitProductColor(uow);
         SeedRoleAdmin.InitProductColorSize(uow);
+        // SeedRoleAdmin.UpdatePrice(uow);
+        // SeedRoleAdmin.UpdateDateProduct(uow);
+        // SeedRoleAdmin.UpdatePhoneNumber(uow);
+        // for (int i = 0; i < 10; i++)
+        // {
+            
+        // SeedRoleAdmin.InitCart(uow);
+        // SeedRoleAdmin.InitOrder(uow);
+        // }
     }
     catch(Exception ex)
     {

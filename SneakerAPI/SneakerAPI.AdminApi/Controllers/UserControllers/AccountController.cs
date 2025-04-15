@@ -18,24 +18,20 @@ using SneakerAPI.Core.Models.UserEntities;
 namespace SneakerAPI.AdminApi.Controllers.UserController
 {   
     [ApiController]
-    //[ApiExplorerSettings(IgnoreApi = true)]
+    [ApiExplorerSettings(IgnoreApi = true)]
     [Route("api/managers")]
-    // [Authorize(Roles=RolesName.Manager)]
+    [Authorize(Roles=RolesName.Manager)]
     public class ManagerController : BaseController {
         private readonly UserManager<IdentityAccount> _accountManager;
         private readonly IEmailSender _emailSender;
-        private readonly IMemoryCache _cache;
         private readonly IUnitOfWork _uow;
-        private readonly int unitInAPage=20;
 
         public ManagerController(UserManager<IdentityAccount> accountManager,
                                  IEmailSender emailSender,
-                                 IMemoryCache cache,
                                  IUnitOfWork uow):base(uow)
         {
             _accountManager = accountManager;
             _emailSender = emailSender;
-            _cache = cache;
             _uow = uow;
         }
         private bool AutoCreateInfo(int account_id){
@@ -46,11 +42,12 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
                     };
                     return _uow.StaffInfo.Add(staffInfo);
         }
-        [HttpGet("list-staffs/page/{page:int?}")]
-        public async Task<IActionResult> GetStaffAccount(int page){
+        //Đã test
+        [HttpGet("staffs")]
+        public async Task<IActionResult> GetStaffAccount(){
             try
             {
-                var accounts= (await _accountManager.GetUsersInRoleAsync(RolesName.Staff)).Skip(page*unitInAPage).Take(unitInAPage);
+                var accounts= await _accountManager.GetUsersInRoleAsync(RolesName.Staff);
                 if(accounts==null)
                     return BadRequest("Have not an account!");
                 return Ok(accounts);
@@ -62,22 +59,22 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
             }
             
         }
-        [HttpPost("create-staff")]
-        public async Task<IActionResult> Register(RegisterDto model )
+        //Đã test
+        [HttpPost("appoint-staff")]
+        public async Task<IActionResult> AppointStaff(EmailUser model )
         {
             try
             {
                 
-            if (model.Password != model.PasswordComfirm)
+            if(string.IsNullOrEmpty(model.Email))
             {
-                return BadRequest("Password and password confirm do not match");
+                return BadRequest("Email is required.");
             }
             var account=await _accountManager.FindByEmailAsync(model.Email);
             if(account!=null)
             {   
-                var roles=await _accountManager.GetRolesAsync(account);
-                // var isInRole=await _accountManager.IsInRoleAsync(account,RolesName.Staff);
-                if(roles.Contains(RolesName.Staff))
+                var isInRoleStaff=await _accountManager.IsInRoleAsync(account,RolesName.Staff);
+                if(isInRoleStaff)
                     return BadRequest("Account has access");
                 var rs=await _accountManager.AddToRoleAsync(account,RolesName.Staff);
                 if(rs.Succeeded)
@@ -85,64 +82,39 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
                     //Auto tạo bảng 
                     if(null==_uow.StaffInfo.FirstOrDefault(x=>x.StaffInfo__AccountId==account.Id))
                     AutoCreateInfo(account.Id);
+                    await _emailSender.SendEmailAsync(account.Email,"Appointment employee",EmailTemplateHtml.RenderEmailNotificationBody(account.UserName,"","You are appointed as a sales person of SLS."));
                 }
-                return Ok("Granted permission to Manager successfully");
+
+                return Ok("Granted permission to staff successfully");
             }
-            var newAccount = new IdentityAccount
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                EmailConfirmed = false
-            };
-
-            var result = await _accountManager.CreateAsync(newAccount, model.Password);
-            if (result.Succeeded)
-            {   
-                await _accountManager.AddToRoleAsync(newAccount, RolesName.Staff);
-                //Auto tạo bảng info
-                AutoCreateInfo(newAccount.Id);
-                // Sinh OTP và lưu vào MemoryCache (hết hạn sau 5 phút)
-                var otpCode = HandleString.GenerateVerifyCode();
-                _cache.Set(model.Email, otpCode, TimeSpan.FromMinutes(5));
-
-                // Gửi OTP qua email
-                await _emailSender.SendEmailAsync(model.Email, "Confirm email",
-                    EmailTemplateHtml.RenderEmailRegisterBody(model.Email, otpCode));
-
-                var uri=new Uri($"{Request.Scheme}://{Request.Host}/api/manager/register-staff/{newAccount.Email}");
-                return Created(uri, new { message = "Create account successfully. Please check your email for verification code.",email=newAccount.Email});
-
-            }
-            return BadRequest(result.Errors);
+           
+            return BadRequest(new {message="Account does not exist contact your administrator to grant access"}); 
              }
             catch (System.Exception)
             {
                 
-                return BadRequest("An error has occurred while registering");
+                return BadRequest(new {message="An error has occurred white appointed"});
             }
         }
     }
     //--------------------------------------------------------------------------------------------------------------
     [ApiController]
-    //[ApiExplorerSettings(IgnoreApi = true)]
-    // [Route("api/admins")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Route("api/admins")]
 
     [Authorize(Roles=RolesName.Admin)]
     public class AdminController : ControllerBase
     {
         private readonly UserManager<IdentityAccount> _accountManager;
         private readonly IEmailSender _emailSender;
-        private readonly IMemoryCache _cache;
         private readonly IUnitOfWork _uow;
         private readonly int unitInAPage=20;
         public AdminController(UserManager<IdentityAccount> accountManager,
                                  IEmailSender emailSender,
-                                 IMemoryCache cache,
                                  IUnitOfWork uow)
         {
             _accountManager = accountManager;
             _emailSender = emailSender;
-            _cache = cache;
            _uow = uow;
         }
 
@@ -157,8 +129,10 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
             var isInRole= await _accountManager.IsInRoleAsync(account,RolesName.Manager);
             if(isInRole){
             var result=await _accountManager.RemoveFromRoleAsync(account,RolesName.Manager);
-                if(result.Succeeded)
+                if(result.Succeeded){
+                await _emailSender.SendEmailAsync(account.Email,"Terminate the contract",EmailTemplateHtml.RenderEmailNotificationBody(account.UserName,"","You are no longer an SLS salesperson."));
                 return Ok(new {result.Succeeded,Message="Manager rights revoked"});
+                }
             }
             return BadRequest("Account is not in role Manager");
                            
@@ -270,15 +244,16 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
                 };
                 return _uow.StaffInfo.Add(staffInfo);
         }
-        [HttpPost("create-manager")]
-        public async Task<IActionResult> Register([FromBody]RegisterDto model)
+        [HttpPost("appoint-manager")]
+        //Bổ nhiệm
+        public async Task<IActionResult> AppointManager([FromBody]EmailUser model)
         {
             try
             {
                 
-            if (model.Password != model.PasswordComfirm)
+            if(string.IsNullOrEmpty(model.Email))
             {
-                return BadRequest("Password and password confirm do not match");
+                return BadRequest("Email is required.");
             }
             var account=await _accountManager.FindByEmailAsync(model.Email);
             if(account!=null)
@@ -291,46 +266,25 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
                 {   
                     if(null==_uow.StaffInfo.FirstOrDefault(x=>x.StaffInfo__AccountId==account.Id))
                     AutoCreateInfo(account.Id);
+                    await _emailSender.SendEmailAsync(account.Email,"Appointment employee",EmailTemplateHtml.RenderEmailNotificationBody(account.UserName,"","You are appointed as a manager of SLS."));
+
                 }
-                return Ok("Granted permission to Manager successfully");
+                return Ok("Granted permission to manager successfully");
             }
 
-            var newAccount = new IdentityAccount
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                EmailConfirmed = false
-            };
-
-            var result = await _accountManager.CreateAsync(newAccount, model.Password);
-            if (result.Succeeded)
-            {   
-                await _accountManager.AddToRoleAsync(newAccount, RolesName.Manager);
-                //Auto tạo bảng info
-                AutoCreateInfo(newAccount.Id);
-                // Sinh OTP và lưu vào MemoryCache (hết hạn sau 5 phút)
-                var otpCode = HandleString.GenerateVerifyCode();
-                _cache.Set(model.Email, otpCode, TimeSpan.FromMinutes(5));
-
-                // Gửi OTP qua email
-                await _emailSender.SendEmailAsync(model.Email, "Confirm email",
-                    EmailTemplateHtml.RenderEmailRegisterBody(model.Email, otpCode));
-
-                var uri=new Uri($"{Request.Scheme}://{Request.Host}/api/admin/register-manager/{newAccount.Email}");
-                return Created(uri, new { message = "Create account successfully. Please check your email for verification code.",email=newAccount.Email});
-            }
-            return BadRequest(result.Errors);
+         
+            return BadRequest(new {message="Account does not exist contact administrator to grant access"});    
              }
             catch (System.Exception)
             {
                 
-                return BadRequest("An error has occurred while registering");
+                return BadRequest(new {message="An error has occurred white appointed"});
             }
         }
     }
     [ApiController]
     [Route("api/accounts")]
-    // //[ApiExplorerSettings(IgnoreApi = true)]
+    [ApiExplorerSettings(IgnoreApi = true)]
     [Area("Dashboard")]
     public class AccountController : BaseController{
 
@@ -353,6 +307,7 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
             _emailSender = emailSender;
             _cache = cache;
             _jwtService = jwtService;
+            
         }
 
     [HttpPost("new-token")]
@@ -367,7 +322,7 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
             return Unauthorized("Refresh Token is not valid!");
         var account=await _accountManager.FindByEmailAsync(username);
         var roles=await _accountManager.GetRolesAsync(account);
-        var newTokens = (TokenResponse)_jwtService.GenerateJwtToken(username,roles);
+        var newTokens = (TokenResponse)_jwtService.GenerateJwtToken(account,roles);
         
         // Cập nhật refresh token mới
         _refreshtoken[username] = newTokens.RefreshToken;
@@ -382,13 +337,62 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
         }
     }
 
-[Authorize]
-[HttpGet("current-user")]
-public IActionResult GetCurrentUser()
-{
-    return Ok((CurrentUser)CurrentUser());
-}   
 
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterDto model )
+        {
+            try
+            {
+   
+            if (string.IsNullOrEmpty(model.Email))
+            {
+                return BadRequest("Email is required.");
+            }
+
+            var account=await _accountManager.FindByEmailAsync(model.Email);
+            if (model.Password != model.PasswordComfirm)
+            {
+                return BadRequest("Password and password confirm do not match");
+            }
+            if(account!=null)
+            {   
+                return Ok(new {message="Account already exists contact administrator to grant access"});
+            }
+            var newAccount = new IdentityAccount
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                EmailConfirmed = false
+            };
+
+            var result = await _accountManager.CreateAsync(newAccount, model.Password);
+            if (result.Succeeded)
+            {   
+                // Sinh OTP và lưu vào MemoryCache (hết hạn sau 5 phút)
+                var otpCode = HandleString.GenerateVerifyCode();
+                _cache.Set(model.Email, otpCode, TimeSpan.FromMinutes(5));
+
+                // Gửi OTP qua email
+              
+    
+                string title="Verify your email address";
+                await _emailSender.SendEmailAsync(model.Email, title,
+                    EmailTemplateHtml.RenderEmailRegisterBody(model.Email, otpCode));
+
+                var uri=new Uri($"{Request.Scheme}://{Request.Host}/api/manager/register-staff/{newAccount.Email}");
+                return Created(uri, new { message = "Create account successfully. Please check your email for verification code.",email=newAccount.Email});
+
+            }
+            return BadRequest(result.Errors);
+             }
+            catch (System.Exception)
+            {
+                
+                return BadRequest("An error has occurred while registering");
+            }
+        }
+ 
         [HttpPost("email-confirmation-resend")]
         public async Task<IActionResult> ResendEmailConfirmation(ResendOTPDto model)
         {   
@@ -460,7 +464,7 @@ public IActionResult GetCurrentUser()
             // Xóa OTP khỏi cache sau khi xác nhận thành công
             _cache.Remove(model.Email);
 
-            return Ok("Email has been successfully verified!");
+            return Ok("Email has been successfully verified. Let's contact administrator to grant access");
                  
             }
             catch (System.Exception)
@@ -483,14 +487,16 @@ public IActionResult GetCurrentUser()
             var roles=await _accountManager.GetRolesAsync(account);
             if(!roles.Any())
                 return Unauthorized("Account does not have access");
-
+            if(roles.Count()==1 && roles.Contains(RolesName.Customer)){
+                return Unauthorized("Account does not have access");
+            }
             if (!await _accountManager.IsEmailConfirmedAsync(account))
                 return Unauthorized("Please confirm email before logging in.");
 
             var result = await _signInManager.PasswordSignInAsync(account, model.Password, false, false);
             if (result.Succeeded)
             {   
-                var token = (TokenResponse)_jwtService.GenerateJwtToken(model.Email,roles);
+                var token = (TokenResponse)_jwtService.GenerateJwtToken(account,roles);
                 _refreshtoken[account.Email]=token.RefreshToken;
                 return Ok(token);
             }

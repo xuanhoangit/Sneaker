@@ -17,9 +17,14 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
         {
             _uow = uow;
         }
-        [HttpGet("{product_color_id:int?}")]
-        public IActionResult GetAll(int product_color_id){
-            return Ok(_uow.ProductColorFile.GetAll(x=>x.ProductColorFile__ProductColorId==product_color_id));
+        [HttpGet("{product-color-id:int?}")]
+        public IActionResult GetAll(int pc_id){
+            var pcf=_uow.ProductColorFile.GetAll(x=>x.ProductColorFile__ProductColorId==pc_id);
+            foreach (var item in pcf)
+            {
+                item.ProductColorFile__Name=$"{Request.Scheme}://{Request.Host}/{localStorage}/{item.ProductColorFile__Name}";
+            }
+            return Ok();
         }
         [HttpDelete("delete")]
         public IActionResult Remove(List<int> file_ids){
@@ -39,9 +44,9 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
             }
             return Ok(result);
         }
-        [HttpDelete("{product_color_id:int?}")]
-        public IActionResult RemoveAll(int product_color_id){
-            var files=_uow.ProductColorFile.Find(x=>x.ProductColorFile__ProductColorId==product_color_id).ToList();
+        [HttpDelete("{pc_id:int?}")]
+        public IActionResult RemoveAll(int pc_id){
+            var files=_uow.ProductColorFile.Find(x=>x.ProductColorFile__ProductColorId==pc_id).ToList();
             var result=_uow.ProductColorFile.RemoveRange(files);
             if(result){
                  // Kiểm tra tệp có tồn tại không

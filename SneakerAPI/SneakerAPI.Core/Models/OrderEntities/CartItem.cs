@@ -12,7 +12,7 @@ namespace SneakerAPI.Core.Models.OrderEntities
         [DefaultValue(1)]
         [Range(1,int.MaxValue)]
         public int CartItem__Quantity {get;set;}
-        public int CartItem__CreatedByAccountId { get; set; }
+        public int CartItem__CreatedByAccountId { get; set; }=5;
         [ForeignKey("CartItem__CreatedByAccountId")]
         public IdentityAccount? Account { get; set; }
         public int CartItem__ProductColorSizeId { get; set; }//FK

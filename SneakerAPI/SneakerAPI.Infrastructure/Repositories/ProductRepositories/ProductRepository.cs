@@ -14,12 +14,13 @@ public class ProductRepository :Repository<Product> ,IProductRepository
 {
     private readonly SneakerAPIDbContext _db;
 
-    // protected DbSet<Product> _productSet;
+    // protected_dbSet<Product> _productSet;
 
     public ProductRepository(SneakerAPIDbContext db):base(db)
     {
-        _db = db;
+        _db =db;
     }
+
     public IQueryable<Product> GetFilteredProducts(ProductFilter filter)
     {
         var query =_dbSet.AsQueryable();
@@ -39,20 +40,31 @@ public class ProductRepository :Repository<Product> ,IProductRepository
         {
             query = query.Where(p => filter.BrandIds.Contains(p.Product__BrandId));
         }
-
+        if(filter.CreatedDate.HasValue)
+        {
+            query = query.Where(p => p.Product__CreatedDate.Value.Date == filter.CreatedDate.Value.Date);
+        }
+        if(filter.FromDate.HasValue)
+        {
+            query = query.Where(p => p.Product__CreatedDate.Value.Date >= filter.FromDate.Value.Date);
+        }
+       if(filter.FromDate.HasValue)
+        {
+            query = query.Where(p => p.Product__CreatedDate >= filter.FromDate);
+        }
         // Lọc theo Color (màu sắc)
         if (filter.ColorIds != null && filter.ColorIds.Any())
         {
             query = query.Where(p => p.ProductColors.Any(pc => filter.ColorIds.Contains(pc.ProductColor__ColorId)));
         }
 
-        // // Lọc theo Size (kích thước)
-        // if (filter.SizeNames != null && filter.SizeNames.Any())
-        // {
-        //     query = query.Where(p => p.ProductColors
-        //         .Any(pc => pc.ProductColorSizes
-        //         .Any(pcs => filter.SizeNames.Contains(pcs.ProductColorSize__SizeName))));
-        // }
+        // Lọc theo Size (kích thước)
+        if (filter.SizeIds != null && filter.SizeIds.Any())
+        {
+            query = query.Where(p => p.ProductColors
+                .Any(pc => pc.ProductColorSizes
+                .Any(pcs => filter.SizeIds.Contains(pcs.ProductColorSize__SizeId))));
+        }
 
         // Lọc theo khoảng giá
         if (filter.RangePrice != null)
@@ -68,7 +80,7 @@ public class ProductRepository :Repository<Product> ,IProductRepository
             }
         }
 
-        return query.Where(p => p.Product__Status == (int)Status.Unreleased || p.Product__Status==(int)Status.Released);
+        return query;
     }
 
 }

@@ -39,8 +39,9 @@ using Xunit;
                 new Address { Address__Id = 1, Address__FullAddress = "123 Street" },
                 new Address { Address__Id = 2, Address__FullAddress = "456 Avenue" }
             };
-            _mockUow.Setup(u => u.Address.GetAllAsync(It.IsAny<Expression<Func<Address, bool>>>()))
-                .ReturnsAsync(addresses);
+            _mockUow.Setup(u => u.Address.GetAllAsync(It.IsAny<Expression<Func<Address, bool>>>(), It.IsAny<string>()))
+            .ReturnsAsync(addresses);
+           
 
             // Act
             var result = await _controller.GetAddresses(userInformationId);
@@ -55,7 +56,7 @@ using Xunit;
         {
             // Arrange
             int userInformationId = 1;
-            _mockUow.Setup(u => u.Address.GetAllAsync(It.IsAny<Expression<Func<Address, bool>>>()))
+            _mockUow.Setup(u => u.Address.GetAllAsync(It.IsAny<Expression<Func<Address, bool>>>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<Address>());
 
             // Act

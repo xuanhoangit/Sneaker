@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj": {}
+    "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj": {}
   },
   "projects": {
-    "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj": {
+    "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj",
+        "projectUniqueName": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj",
         "projectName": "SneakerAPI.Api",
-        "projectPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj",
+        "projectPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\SneakerAPI.Api.csproj",
         "packagesPath": "C:\\Users\\WelCome To BVCN02\\.nuget\\packages\\",
-        "outputPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Api\\obj\\",
+        "outputPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\WelCome To BVCN02\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -26,11 +26,11 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj": {
-                "projectPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj"
+              "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj": {
+                "projectPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj"
               },
-              "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj": {
-                "projectPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj"
+              "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj": {
+                "projectPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj"
               }
             }
           }
@@ -90,6 +90,10 @@
               "target": "Package",
               "version": "[9.0.1, )"
             },
+            "Microsoft.Extensions.Caching.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[9.0.2, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
@@ -118,14 +122,14 @@
         }
       }
     },
-    "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj": {
+    "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj",
+        "projectUniqueName": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj",
         "projectName": "SneakerAPI.Core",
-        "projectPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj",
+        "projectPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj",
         "packagesPath": "C:\\Users\\WelCome To BVCN02\\.nuget\\packages\\",
-        "outputPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\obj\\",
+        "outputPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\WelCome To BVCN02\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -204,14 +208,14 @@
         }
       }
     },
-    "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj": {
+    "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj",
+        "projectUniqueName": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj",
         "projectName": "SneakerAPI.Infrastructure",
-        "projectPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj",
+        "projectPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Infrastructure\\SneakerAPI.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\WelCome To BVCN02\\.nuget\\packages\\",
-        "outputPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Infrastructure\\obj\\",
+        "outputPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\WelCome To BVCN02\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -226,8 +230,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj": {
-                "projectPath": "D:\\Download\\API\\SneakerApi\\sneakerApi\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj"
+              "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj": {
+                "projectPath": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Core\\SneakerAPI.Core.csproj"
               }
             }
           }
@@ -276,6 +280,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[9.0.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
             },
             "StackExchange.Redis": {
               "target": "Package",

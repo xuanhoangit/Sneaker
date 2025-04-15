@@ -77,6 +77,7 @@ public class UnitOfWork : IUnitOfWork
     public IAddressRepository Address {get;}
 
     public IVnpay Vnpay {get;}
+    public IGHN GHN {get;}
 
     public IFavoriteRepository Favorite {get;}
 

@@ -13,6 +13,8 @@ using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces.UserInterfaces;
 using SneakerAPI.Infrastructure.Repositories.UserRepositories;
 using VNPAY.NET;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi.Models;
 
 var  AllowHostSpecifiOrigins = "_allowHostSpecifiOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -25,15 +27,26 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: AllowHostSpecifiOrigins,
                       policy  =>
                       {
-                            // policy.WithOrigins("http://127.0.0.1:5500")
-                            policy.AllowAnyHeader()
+                            policy.WithOrigins("http://127.0.0.1:5500")
+                            .AllowAnyHeader()
                             .AllowAnyMethod()
-                            .AllowCredentials(); // Only if using cookies/auth headers
+                            .AllowCredentials(); // nếu bạn gửi cookie/token theo kiểu credentials
                       });
 });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+});
+
 builder.Services.AddDbContext<SneakerAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SneakerAPIConnection"),b=>b.MigrationsAssembly("SneakerAPI.AdminApi")));
 
@@ -48,14 +61,8 @@ builder.Services.AddIdentity<IdentityAccount, IdentityRole<int>>()
 
 //*************** Tất cả config**
 var config=builder.Configuration;
-builder.Services.AddAuthentication()
-    .AddCookie()
-    .AddGoogle(options =>
-    {
-        options.ClientId = config["Authentication:Google:ClientId"];
-        options.ClientSecret = config["Authentication:Google:ClientSecret"];
-        options.CallbackPath="/signin-google";
-    });
+
+
 //SetConfigEmailSettings
 config["ConnectionStrings:SneakerAPIConnection"]=Environment.GetEnvironmentVariable("ConnectionString");
 config["EmailSettings:SmtpServer"]=Environment.GetEnvironmentVariable("SmtpServer");
@@ -70,28 +77,55 @@ config["Vnpay:ReturnUrl"]=Environment.GetEnvironmentVariable("ReturnUrl");
 //SetDataEmailSettingModel
 builder.Services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
 
-builder.Services.AddAuthentication()
-.AddJwtBearer(options =>
+builder.Services.AddAuthentication(
+    options =>
 {
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}
+)   
+.AddJwtBearer(options =>
+{   
+    
+    // Cấu hình JWT Bearer Authentication
     options.TokenValidationParameters = new TokenValidationParameters
     {
          ValidateIssuer = true,
          ValidateAudience = true,
          ValidateLifetime = true,
-          // Cấu hình RoleClaimType đúng với token của bạn
-            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
          ValidateIssuerSigningKey = true,
+         
+          // Cấu hình RoleClaimType đúng với token của bạn
+        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
          ValidIssuer = Environment.GetEnvironmentVariable("JWT__ValidIssuer"),
          ValidAudience = Environment.GetEnvironmentVariable("JWT__ValidAudience"),
+
          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT__Secret")))
     };
+
+
+})
+.AddCookie()
+.AddGoogle(options =>
+{
+    options.ClientId = config["Authentication:Google:ClientId"];
+    options.ClientSecret = config["Authentication:Google:ClientSecret"];
+    options.CallbackPath="/signin-google";
 });
+
+builder.Services.AddAuthorization();
+builder.Services.AddControllers();
 //End Cònig
 // Đăng ký AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379"; // Đổi thành IP/host Redis thật nếu deploy
+    options.InstanceName = "dmm"; // Prefix cho cache key
+});
 builder.Services.AddMemoryCache(); // Thêm dịch vụ MemoryCache
-builder.Services.AddSession(); // Thêm dịch vụ Session
+// builder.Services.AddSession(); // Thêm dịch vụ Session
 builder.Services.AddDistributedMemoryCache(); // Cần thiết cho Session
 
 var app = builder.Build();
@@ -109,9 +143,10 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(AllowHostSpecifiOrigins);
 // Sử dụng Authentication và Authorization
+
+
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers(); 
 
 app.Run();

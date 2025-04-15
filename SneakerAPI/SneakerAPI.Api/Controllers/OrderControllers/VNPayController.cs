@@ -10,6 +10,7 @@ using SneakerAPI.Core.VnpayEnums;
 
 [Route("api/payment")]
 [ApiController]
+[ApiExplorerSettings(IgnoreApi =true)]
 public class VnpayPayment : BaseController
 {
     private readonly IConfiguration _configuration;
