@@ -9,7 +9,7 @@ namespace SneakerAPI.Api.Controllers.ProductControllers
 {   
     //pass
     [Route("api/favorites")]
-    [ApiExplorerSettings(IgnoreApi = true)]
+    // [ApiExplorerSettings(IgnoreApi = true)]
     [ApiController]
     [Authorize(Roles=RolesName.Customer)]
     public class FavoriteController : BaseController

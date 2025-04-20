@@ -11,7 +11,7 @@ namespace SneakerAPI.Api.Controllers
 {   
     [ApiController]
     [Route("api/products")]
-    [ApiExplorerSettings(IgnoreApi =true)]
+    // [ApiExplorerSettings(IgnoreApi =true)]
     public class ProductController : BaseController
     {
         private readonly IUnitOfWork _uow;
