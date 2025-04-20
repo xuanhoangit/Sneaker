@@ -24,6 +24,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <!-- <PackageReference Include="VNPAY.NET" Version="8.5.0" /> -->
   </ItemGroup>
+<ItemGroup>
+  <None Update=".env">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SneakerAPI.Core\SneakerAPI.Core.csproj" />

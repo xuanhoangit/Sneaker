@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: AllowHostSpecifiOrigins,
                       policy  =>
                       {
-                          policy.WithOrigins().AllowAnyMethod()
+                          policy.AllowAnyMethod()
                                                                             .AllowAnyHeader()
                                                                             .AllowCredentials();
                       });
@@ -42,6 +42,14 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<SneakerAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SneakerAPIConnection"),b=>b.MigrationsAssembly("SneakerAPI.AdminApi")));
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{   
+    serverOptions.ListenAnyIP(5000); // HTTP
+    serverOptions.ListenAnyIP(443, listenOptions =>
+    {
+        listenOptions.UseHttps(Environment.GetEnvironmentVariable("FILECERT"), "mypassword");
+    });
+});
 
 builder.Services.AddScoped<IVnpay,Vnpay>();
 builder.Services.AddTransient<IUnitOfWork,UnitOfWork>();
@@ -92,37 +100,38 @@ builder.Services.AddDistributedMemoryCache(); // Cần thiết cho Session
 
 var app = builder.Build();
 // Thực hiện seed Role và tài khoản Admin
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    
-    try
-    {   
-        var uow = services.GetRequiredService<IUnitOfWork>();
-        await SeedRoleAdmin.InitializeAccount(services,uow);
-        await SeedRoleAdmin.InitBrand(uow);
-        SeedRoleAdmin.InitColor(uow);
-        SeedRoleAdmin.InitCategory(uow);
-        SeedRoleAdmin.InitProductCategory(uow);
-        SeedRoleAdmin.InitSize(uow);
-        SeedRoleAdmin.InitProductColor(uow);
-        SeedRoleAdmin.InitProductColorSize(uow);
-        // SeedRoleAdmin.UpdatePrice(uow);
-        // SeedRoleAdmin.UpdateDateProduct(uow);
-        // SeedRoleAdmin.UpdatePhoneNumber(uow);
-        // for (int i = 0; i < 10; i++)
-        // {
-            
-        // SeedRoleAdmin.InitCart(uow);
-        // SeedRoleAdmin.InitOrder(uow);
-        // }
-    }
-    catch(Exception ex)
-    {
-        // Log lỗi nếu cần
-        Console.WriteLine("hahaha"+ex.Message);
-    }
-}
+
+// using (var scope = app.Services.CreateScope())
+// {
+//     var services = scope.ServiceProvider;
+
+//     try
+//     {
+//         var uow = services.GetRequiredService<IUnitOfWork>();
+//         await SeedRoleAdmin.InitializeAccount(services, uow);
+//         await SeedRoleAdmin.InitBrand(uow);
+//         SeedRoleAdmin.InitColor(uow);
+//         SeedRoleAdmin.InitCategory(uow);
+//         SeedRoleAdmin.InitProductCategory(uow);
+//         SeedRoleAdmin.InitSize(uow);
+//         SeedRoleAdmin.InitProductColor(uow);
+//         SeedRoleAdmin.InitProductColorSize(uow);
+//         // SeedRoleAdmin.UpdatePrice(uow);
+//         // SeedRoleAdmin.UpdateDateProduct(uow);
+//         // SeedRoleAdmin.UpdatePhoneNumber(uow);
+//         // for (int i = 0; i < 10; i++)
+//         // {
+
+//         // SeedRoleAdmin.InitCart(uow);
+//         // SeedRoleAdmin.InitOrder(uow);
+//         // }
+//     }
+//     catch (Exception ex)
+//     {
+//         // Log lỗi nếu cần
+//         Console.WriteLine("hahaha" + ex.Message);
+//     }
+// }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

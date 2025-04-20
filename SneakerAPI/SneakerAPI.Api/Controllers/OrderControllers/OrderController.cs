@@ -154,13 +154,17 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
 
                 if (!cartItems.Any())
                     return BadRequest("Cart is empty.");
-
+                var amountDue = cartItems.Sum(c => c.ProductColor.ProductColor__Price * c.CartItem__Quantity);
+                if (amountDue > 10000000)
+                {
+                    return BadRequest("Your order cannot exceed 10.000.000đ. Please split into small orders");
+                }
                 // Tạo đơn hàng
                 var order = new Order
                 {
                     Order__CreatedByAccountId = currentAccount.AccountId,
                     Order__CreatedDate=DateTime.UtcNow,
-                    Order__AmountDue = cartItems.Sum(c => c.ProductColor.ProductColor__Price * c.CartItem__Quantity),
+                    Order__AmountDue = amountDue,
                     OrderItems = cartItems.Select(c => new OrderItem
                     {
                         OrderItem__ProductColorSizeId = c.CartItem__ProductColorSizeId,

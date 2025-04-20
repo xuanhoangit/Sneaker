@@ -580,4 +580,3 @@ D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\refi
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\SneakerAPI.Api.pdb
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\SneakerAPI.Api.genruntimeconfig.cache
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\ref\SneakerAPI.Api.dll
-D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\Microsoft.Extensions.Caching.StackExchangeRedis.dll

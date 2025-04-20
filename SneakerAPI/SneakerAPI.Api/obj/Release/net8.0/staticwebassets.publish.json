@@ -1,0 +1,39 @@
+{
+  "Version": 1,
+  "Hash": "FfZyUHDwSqbtLxvNc+TLeCn1CtmeBeewwNUItn8qN/0=",
+  "Source": "SneakerAPI.Api",
+  "BasePath": "_content/SneakerAPI.Api",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "SneakerAPI.Api\\wwwroot",
+      "Source": "SneakerAPI.Api",
+      "ContentRoot": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\wwwroot\\",
+      "BasePath": "_content/SneakerAPI.Api",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\wwwroot\\uploads\\avatars\\default.jpg",
+      "SourceId": "SneakerAPI.Api",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\wwwroot\\",
+      "BasePath": "_content/SneakerAPI.Api",
+      "RelativePath": "uploads/avatars/default.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\avatars\\default.jpg"
+    }
+  ]
+}

@@ -27,25 +27,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: AllowHostSpecifiOrigins,
                       policy  =>
                       {
-                            policy.WithOrigins("http://127.0.0.1:5500")
+                            policy
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials(); // nếu bạn gửi cookie/token theo kiểu credentials
                       });
 });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-});
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<SneakerAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SneakerAPIConnection"),b=>b.MigrationsAssembly("SneakerAPI.AdminApi")));
@@ -76,7 +65,14 @@ config["Vnpay:BaseUrl"]=Environment.GetEnvironmentVariable("BaseUrl");
 config["Vnpay:ReturnUrl"]=Environment.GetEnvironmentVariable("ReturnUrl");
 //SetDataEmailSettingModel
 builder.Services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
-
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{   
+    serverOptions.ListenAnyIP(5001); // HTTP
+    serverOptions.ListenAnyIP(444, listenOptions =>
+    {
+        listenOptions.UseHttps(Environment.GetEnvironmentVariable("FILECERT"), "mypassword");
+    });
+});
 builder.Services.AddAuthentication(
     options =>
 {
@@ -108,8 +104,8 @@ builder.Services.AddAuthentication(
 .AddCookie()
 .AddGoogle(options =>
 {
-    options.ClientId = config["Authentication:Google:ClientId"];
-    options.ClientSecret = config["Authentication:Google:ClientSecret"];
+    options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID");
+    options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
     options.CallbackPath="/signin-google";
 });
 
@@ -119,11 +115,7 @@ builder.Services.AddControllers();
 // Đăng ký AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = "localhost:6379"; // Đổi thành IP/host Redis thật nếu deploy
-    options.InstanceName = "dmm"; // Prefix cho cache key
-});
+
 builder.Services.AddMemoryCache(); // Thêm dịch vụ MemoryCache
 // builder.Services.AddSession(); // Thêm dịch vụ Session
 builder.Services.AddDistributedMemoryCache(); // Cần thiết cho Session

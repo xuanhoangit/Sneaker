@@ -26,7 +26,11 @@
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
-
+<ItemGroup>
+  <None Update=".env">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SneakerAPI.Core\SneakerAPI.Core.csproj" />
     <ProjectReference Include="..\SneakerAPI.Infrastructure\SneakerAPI.Infrastructure.csproj" />

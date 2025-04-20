@@ -16,10 +16,31 @@ public class GHNController : BaseController
         _ghn = ghn;
         _uow = uow;
     }
-    [HttpGet("detail")]
-    public async Task<IActionResult> GetOrderDetail(string clientOrderCode)
+    [HttpPost]
+    public IActionResult ReceiveCallback([FromBody] GHNOrderCallbackModel callback)
     {
-        var result = await _ghn.GetOrderDetail(clientOrderCode);
+        // TODO: Xử lý callback tại đây (ghi log, cập nhật DB,...)
+        var order = _uow.Order.FirstOrDefault(x=>x.OrderCode==callback.OrderCode);
+        if (order == null)
+        {
+            return BadRequest("order not found");
+        }
+        var status = (int)GHNStatusMapper.MapToOrderStatus(callback.Status);
+        if (status != 400)
+        {
+            order.Order__Status = status;
+            _uow.Order.Update(order);
+        }
+        
+
+        Console.WriteLine($"📦 Callback GHN - Mã đơn: {callback.OrderCode}, Trạng thái: {callback.Status}, Tổng phí: {callback.TotalFee}");
+
+        return Ok(callback);
+    }
+    [HttpGet("detail")]
+    public async Task<IActionResult> GetOrderDetail(string order_code)
+    {
+        var result = await _ghn.GetOrderDetail(order_code);
         return Ok(result);
     }
     [HttpGet("create-order")]
@@ -38,7 +59,7 @@ public class GHNController : BaseController
              orderRequest.CodAmount=order.Order__PaymentStatus==(int)PaymentStatus.Paid?0:(int)amountDue;
              
              orderRequest.Items= await _uow.OrderItem.GetItemDTO(shipping.OrderId);
-             orderRequest.RequiredNote="CHOTHUHANG";
+             orderRequest.RequiredNote=shipping.RequiredNote;
 
              var itemCount=orderRequest.Items.Count();
              if(500*itemCount> 30000)
@@ -84,6 +105,10 @@ public class GHNController : BaseController
 
         
         var result = await _ghn.CreateShippingOrderAsync(orderRequest);
+        if (result == null)
+        {
+            return BadRequest("Somethings went wrong, maybe your address invalid. Please try again with another address");
+        }
         order.OrderCode=result.data.order_code;
         _uow.Order.Update(order);
         return Ok(result);

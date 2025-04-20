@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\Download\\FinalProject\\Sneaker\\SneakerAPI\\SneakerAPI.Api\\wwwroot\\uploads\\avatars\\default.jpg",
+      "PackagePath": "staticwebassets\\uploads\\avatars\\default.jpg"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.SneakerAPI.Api.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.build.SneakerAPI.Api.props",
+      "PackagePath": "build\\SneakerAPI.Api.props"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.SneakerAPI.Api.props",
+      "PackagePath": "buildMultiTargeting\\SneakerAPI.Api.props"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.buildTransitive.SneakerAPI.Api.props",
+      "PackagePath": "buildTransitive\\SneakerAPI.Api.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
