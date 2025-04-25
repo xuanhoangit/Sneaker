@@ -22,7 +22,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
         }
         
         //Chi tiêu của cá nhân
-        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin}")]
+        [Authorize(Roles=$"{RolesName.SaleManager}")]
         [HttpGet("user-spend")]
         public async Task<IActionResult> GetUserSpend([FromQuery] RangeDateTime rangeDateTime,int accountId)
         {
@@ -45,13 +45,13 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin}")]
+        [Authorize(Roles=$"{RolesName.SaleManager}")]
         [HttpGet("monthly-revenue")]
         public async Task<IActionResult> GetRevenueMonthly([FromQuery] int month, int year){
             var result=await _uow.Order.GetRevenueMonthly(month,year);
             return Ok(result);
         }
-        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin}")]
+        [Authorize(Roles=$"{RolesName.SaleManager}")]
         [HttpGet("daily-revenue")]
         public async Task<IActionResult> GetRevenueByDaily([FromQuery] DateTime time)
         {
@@ -70,7 +70,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin},{RolesName.Staff}")]
+        [Authorize(Roles=$"{RolesName.ProductManager},{RolesName.Staff}")]
         [HttpGet("filter/page/{page}")]
         public async Task<IActionResult> GetOrdersByFilter([FromQuery] OrderFilter filter,int page=1)
         {
@@ -89,16 +89,11 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-        [Authorize(Roles=$"{RolesName.Manager},{RolesName.Admin},{RolesName.Staff}")]
+        [Authorize(Roles=$"{RolesName.ProductManager},{RolesName.Staff}")]
         [HttpGet("{orderId}/items")]
         public async Task<IActionResult> GetOrderItems(int orderId)
         {
-            // var currentAccount = CurrentUser() as CurrentUser;
-            // if (currentAccount == null)
-            //     return Unauthorized("User not authenticated.");
 
-            // var order = _uow.Order.FirstOrDefault(x =>
-            //     x.Order__CreatedByAccountId == currentAccount.AccountId && x.Order__Id == orderId);
             var order = _uow.Order.Find(x=>x.Order__Id==orderId);
             if (order == null)
                 return NotFound("Order not found.");
@@ -107,7 +102,7 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
             return Ok(orderItems);
         }
         [HttpPatch("cancel-order/{orderId:int?}")]
-        [Authorize(Roles=RolesName.Staff)]
+        [Authorize(Roles=$"{RolesName.Staff},{RolesName.ProductManager}")]
         public async Task<IActionResult> CancelOrder(int orderId){
             try
             {   
@@ -173,10 +168,11 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                     return BadRequest("Cart is empty.");
 
                 // Tạo đơn hàng
+            
                 var order = new Order
                 {
                     Order__CreatedByAccountId = currentAccount.AccountId,
-                    Order__CreatedDate=DateTime.Now,
+                    Order__CreatedDate = DateTime.Now,
                     Order__AmountDue = cartItems.Sum(c => c.ProductColor.ProductColor__Price * c.CartItem__Quantity),
                     OrderItems = cartItems.Select(c => new OrderItem
                     {
@@ -186,7 +182,8 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                     Order__PaymentCode = checkoutDTO.OrderPayment,
                     Order__Type = Form_of_purchase.Offline,
                     Order__Status = (int)OrderStatus.Pending,
-                    Order__PaymentStatus=(int)PaymentStatus.Unpaid
+                    Order__PaymentStatus = (int)PaymentStatus.Unpaid,
+                    Order__AddressId=_uow.Address.GetAddressStoreAt()
                 };
 
                 var result = _uow.Order.Add(order);

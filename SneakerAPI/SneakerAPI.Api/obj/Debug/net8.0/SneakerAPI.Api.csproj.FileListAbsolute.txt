@@ -580,3 +580,9 @@ D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\refi
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\SneakerAPI.Api.pdb
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\SneakerAPI.Api.genruntimeconfig.cache
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\obj\Debug\net8.0\ref\SneakerAPI.Api.dll
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\.env
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\Customer\web.config
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\Customer\appsettings.Development.json
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\Customer\appsettings.json
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\Customer\SneakerAPI.Api.deps.json
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.Api\bin\Debug\net8.0\Customer\SneakerAPI.Api.runtimeconfig.json

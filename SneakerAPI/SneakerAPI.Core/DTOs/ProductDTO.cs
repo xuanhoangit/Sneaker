@@ -15,6 +15,7 @@ namespace SneakerAPI.Core.DTOs
         public string? Product__Description {get;set;}
         public int Product__Id { get; set; }
         public string? Product__Name {get;set;}
-        public List<GetProductColorDTO>? ProductColors {get;set;}
+        public int Product__Sold { get; set; }
+        public List<GetProductColorDTO>? ProductColors { get; set; }
     }
 }

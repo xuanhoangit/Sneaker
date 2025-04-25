@@ -17,7 +17,7 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
         {
             _uow = uow;
         }
-        [HttpGet("{product-color-id:int?}")]
+        [HttpGet("product-color-id/{pc_id:int}")]
         public IActionResult GetAll(int pc_id){
             var pcf=_uow.ProductColorFile.GetAll(x=>x.ProductColorFile__ProductColorId==pc_id);
             foreach (var item in pcf)
@@ -62,9 +62,7 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
             }
             return Ok(result);
         }
-        // public async Task<IActionResult> Remove(int){
 
-        // }
         [HttpPost("upload")]
         public async Task<IActionResult> Upload([FromForm] List<ProductColorFile> productColorFiles)
         {  

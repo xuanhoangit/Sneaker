@@ -10,7 +10,8 @@ public static class RolesName
     public const string Admin = "Admin"; // ✅ Là hằng số
     public const string Staff = "Staff"; // ✅ Là hằng số
     public const string Customer = "Customer"; // ✅ Là hằng số
-    public const string Manager = "Manager"; // ✅ Là hằng số
+    public const string ProductManager = "ProductManager"; // ✅ Là hằng số
+    public const string SaleManager = "SaleManager"; // ✅ Là hằng số
 }
 public class RegisterDto
 {
@@ -48,6 +49,10 @@ public class CurrentUser{
 }
 public class EmailUser{
     public string Email { get; set; }
+}
+public class UserRole{
+    public string Email { get; set; }
+    public string Role { get; set; }
 }
 public class TokenResponse{
     public string AccessToken { get; set; }

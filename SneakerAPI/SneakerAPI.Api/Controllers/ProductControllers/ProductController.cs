@@ -86,13 +86,15 @@ namespace SneakerAPI.Api.Controllers
                 var dto= new GetProductDTO{
                         Product__Id=product.Product__Id,
                         Product__Name=product.Product__Name,
-                        ProductColors=product.ProductColors.Select(pc=>new GetProductColorDTO{
+                        Product__Sold=product.Product__Sold,
+                        ProductColors =product.ProductColors.Select(pc=>new GetProductColorDTO{
                             ProductColor__Name=pc.ProductColor__Name,
                             ProductColor__Description=pc.ProductColor__Description,
                             ProductColor__ColorId=pc.ProductColor__ColorId,
                             ProductColor__Price=pc.ProductColor__Price,
                             ProductColor__Id=pc.ProductColor__Id,
-                            ProductColor__ProductId=pc.ProductColor__ProductId,
+                            ProductColor__Sold=pc.ProductColor__Sold,
+                            ProductColor__ProductId =pc.ProductColor__ProductId,
                         }).ToList()
 
                 };
@@ -120,12 +122,14 @@ namespace SneakerAPI.Api.Controllers
                 }
                 var products = query
                     .Include(p=>p.ProductColors)
-                    .Where(x=>x.Product__Status==(int)Status.Unreleased)
+                    .Where(x=>x.Product__Status==(int)Status.Released)
                     .Select(product=>new Product{
-                        Product__Id=product.Product__Id,
-                        Product__Name=product.Product__Name,
-                        ProductColors=product.ProductColors,
-                        Product__CreatedDate=product.Product__CreatedDate
+                        Product__Id = product.Product__Id,
+                        Product__Name = product.Product__Name,
+                        ProductColors = product.ProductColors,
+                        Product__Sold = product.Product__Sold
+                        // ,
+                        // Product__CreatedDate = product.Product__CreatedDate
                     })
                     .Skip((page - 1) * unitInAPage)
                     .Take(unitInAPage)
@@ -160,7 +164,7 @@ namespace SneakerAPI.Api.Controllers
                     return NotFound("No products found for this category.");
 
                 var products = _uow.Product
-                    .GetAll(x => productIds.Contains(x.Product__Id),"ProductColors")
+                    .GetAll(x => productIds.Contains(x.Product__Id) && x.Product__Status==(int)Status.Released,"ProductColors")
                     .Skip((page - 1) * unitInAPage)
                     .Take(unitInAPage)
                     .ToList();

@@ -11,8 +11,8 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
 {   //pass
     [Route("api/addresses")]
     [ApiController]
-    [ApiExplorerSettings(IgnoreApi =true)]
-    [Authorize(Roles = RolesName.Customer)]
+    // [ApiExplorerSettings(IgnoreApi =true)]
+    // [Authorize(Roles = RolesName.Customer)]
     public class AddressController : BaseController
     {
         private readonly IUnitOfWork _uow;

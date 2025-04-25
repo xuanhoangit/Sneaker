@@ -27,14 +27,16 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: AllowHostSpecifiOrigins,
                       policy  =>
                       {
-                            policy
+                          policy
+                            .WithOrigins(Environment.GetEnvironmentVariable("OriginHost"),Environment.GetEnvironmentVariable("OriginHost1"))
+                            // .WithOrigins("http://127.0.0.1:50461")
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials(); // nếu bạn gửi cookie/token theo kiểu credentials
                       });
 });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// builder.Services.AddEndpointsApiExplorer();
+// builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<SneakerAPIDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SneakerAPIConnection"),b=>b.MigrationsAssembly("SneakerAPI.AdminApi")));
@@ -124,11 +126,11 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 

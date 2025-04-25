@@ -53,13 +53,13 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
             }
         }
         [HttpPost("create")]
-        public async Task<IActionResult> Create ([FromBody]ProductColor ProductColor){
+        public async Task<IActionResult> Create ([FromBody]ProductColorDTO ProductColorDTO){
             try
             {
                 if(!ModelState.IsValid){
                     return BadRequest(new {result=false,message="Add product color failed"});
                 }
-                var productColor=_mapper.Map<ProductColor>(ProductColor);
+                var productColor=_mapper.Map<ProductColor>(ProductColorDTO);
                 var isSuccess =await _uow.ProductColor.AddAsync(productColor);
                 if(!isSuccess)
                     return BadRequest(new {result=isSuccess,message="Add product color failed"});
@@ -72,12 +72,18 @@ namespace SneakerAPI.AdminApi.Controllers.ProductControllers
             }
         }
         [HttpPut("update")]
-        public IActionResult Update ([FromBody]ProductColor productColor){
+        public IActionResult Update ([FromBody]ProductColorDTO productColorDto){
             try
             {
-                if(!ModelState.IsValid){
-                    return BadRequest(new {result=false,message="Update product color failed"});
+                // if(!ModelState.IsValid){
+                //     return BadRequest(new {result=false,message="Update product color failed"});
+                // }
+                if (productColorDto.ProductColor__Id == 0)
+                {
+                    return NotFound("Product Color not found");
                 }
+                var productColor=_mapper.Map<ProductColor>(productColorDto);
+            
                 var isSuccess = _uow.ProductColor.Update(productColor);
                 return isSuccess? Ok(new {result=isSuccess,message="Updated product color successfully"}):
                 BadRequest(new {result=isSuccess,message="Update product color failed"});

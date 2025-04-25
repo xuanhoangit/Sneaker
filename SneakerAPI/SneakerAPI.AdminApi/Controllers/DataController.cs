@@ -54,10 +54,10 @@ public static class SeedRoleAdmin
             return true;
         }
         public static bool InitOrder(IUnitOfWork _uow){
-            var isSeed=_uow.Order.GetAll().Take(1);
-            if(isSeed.Any()){
-                return false;
-            }
+            // var isSeed=_uow.Order.GetAll().Take(1);
+            // if(isSeed.Any()){
+            //     return false;
+            // }
             var random = new Random();
 
             var cartItemResult = _uow.CartItem.GetAll()
@@ -116,17 +116,17 @@ public static class SeedRoleAdmin
             return true;
         }
         public static bool InitCart(IUnitOfWork _uow){
-            var isSeeed=_uow.CartItem.GetAll(x=>x.CartItem__Id>0).Take(1);
-            // System.Console.WriteLine("isSeeed");
-            // System.Console.WriteLine(isSeeed!=null);
-            if(isSeeed.Any())
-            return false;
+            // var isSeeed=_uow.CartItem.GetAll(x=>x.CartItem__Id>0).Take(1);
+            // // System.Console.WriteLine("isSeeed");
+            // // System.Console.WriteLine(isSeeed!=null);
+            // if(isSeeed.Any())
+            // return false;
             var random = new Random();
         var pcs=_uow.ProductColorSize.GetAll().ToList();
         var count=pcs.Count();
         var cartItems = new List<CartItem>();
 
-        for (int i = 0; i < 800; i++)
+        for (int i = 0; i < 200; i++)
         {
         var cartItem = new CartItem
             {
@@ -1175,7 +1175,7 @@ new ProductColor { ProductColor__Name = "Blue Burst", ProductColor__Price = 2123
     {
         var userManager = serviceProvider.GetRequiredService<UserManager<IdentityAccount>>();
          var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
-         string[] roleNames = { RolesName.Admin, RolesName.Customer, RolesName.Manager,RolesName.Staff};
+         string[] roleNames = { RolesName.Admin, RolesName.Customer, RolesName.SaleManager,RolesName.ProductManager,RolesName.Staff};
           foreach (var roleName in roleNames)
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
@@ -1183,74 +1183,131 @@ new ProductColor { ProductColor__Name = "Blue Burst", ProductColor__Price = 2123
                     await roleManager.CreateAsync(new IdentityRole<int>(roleName));
                 }
             }
+            if (await userManager.FindByEmailAsync("productmanager@gmail.com")==null)
+            {
+                var user = new IdentityAccount
+                        {
+                            UserName = "productmanager@gmail.com",
+                            Email = "productmanager@gmail.com",
+                            EmailConfirmed = true
+                        };
+
+                        var result = await userManager.CreateAsync(user, "ProductManager@123"); // Mật khẩu mặc định
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, RolesName.ProductManager);
+                            _uow.StaffInfo.Add(new StaffInfo
+                            {
+                                StaffInfo__AccountId = user.Id,
+                                StaffInfo__Avatar = HandleString.DefaultImage,
+                                StaffInfo__FirstName = "Product",
+                                StaffInfo__LastName = "Manager",
+                                StaffInfo__Phone = "0382456456"
+
+                            });
+                        }
+            }
+            if (await userManager.FindByEmailAsync("salemanager@gmail.com")==null)
+            {
+                var user = new IdentityAccount
+                        {
+                            UserName = "salemanager@gmail.com",
+                            Email = "salemanager@gmail.com",
+                            EmailConfirmed = true
+                        };
+
+                        var result = await userManager.CreateAsync(user, "SaleManager@123"); // Mật khẩu mặc định
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, RolesName.SaleManager);
+                            _uow.StaffInfo.Add(new StaffInfo
+                            {
+                                StaffInfo__AccountId = user.Id,
+                                StaffInfo__Avatar = HandleString.DefaultImage,
+                                StaffInfo__FirstName = "Sale",
+                                StaffInfo__LastName = "Manager",
+                                StaffInfo__Phone = "0382123123"
+
+                            });
+                        }
+            }
         for (int i = 1; i < 100; i++)
-        {   
-            if(i==1){
-                if (await userManager.FindByEmailAsync("admin@gmail.com") == null)
+            {
+                if (i == 1)
+                {
+                    if (await userManager.FindByEmailAsync("admin@gmail.com") == null)
+                    {
+                        var user = new IdentityAccount
+                        {
+                            UserName = "admin@gmail.com",
+                            Email = "admin@gmail.com",
+                            EmailConfirmed = true
+                        };
+
+                        var result = await userManager.CreateAsync(user, "Admin@123"); // Mật khẩu mặc định
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, "Admin");
+                            _uow.StaffInfo.Add(new StaffInfo
+                            {
+                                StaffInfo__AccountId = user.Id,
+                                StaffInfo__Avatar = HandleString.DefaultImage,
+                                StaffInfo__FirstName = "Staff",
+                                StaffInfo__LastName = "Account" + i,
+                                StaffInfo__Phone = "03824567" + (i < 10 ? "0" + i : i.ToString())
+
+                            });
+                        }
+                    }
+                }
+                string email = $"user{i}@gmail.com";
+                if (await userManager.FindByEmailAsync(email) != null)
+                {
+                    break;
+                }
+                if (await userManager.FindByEmailAsync(email) == null)
                 {
                     var user = new IdentityAccount
                     {
-                        UserName = "admin@gmail.com",
-                        Email = "admin@gmail.com",
+                        UserName = email,
+                        Email = email,
                         EmailConfirmed = true
                     };
 
-                    var result= await userManager.CreateAsync(user, "Admin@123"); // Mật khẩu mặc định
-                    if(result.Succeeded){
-                        await userManager.AddToRoleAsync(user,"Admin");
-                        _uow.StaffInfo.Add(new StaffInfo{
-                            StaffInfo__AccountId=user.Id,
-                            StaffInfo__Avatar=HandleString.DefaultImage,
-                            StaffInfo__FirstName="Staff",
-                            StaffInfo__LastName="Account"+i,
-                            StaffInfo__Phone="03824567"+ (i<10?"0"+i:i.ToString())
-                            
-                        });
-                    }
-            }
-            }
-            string email = $"user{i}@gmail.com";
-            if(await userManager.FindByEmailAsync(email)!=null){
-                break;
-            }
-            if (await userManager.FindByEmailAsync(email) == null)
-            {
-                var user = new IdentityAccount
-                {
-                    UserName = email,
-                    Email = email,
-                    EmailConfirmed = true
-                };
+                    var result = await userManager.CreateAsync(user, "User@123"); // Mật khẩu mặc định
+                    if (result.Succeeded)
+                    {
+                        if (i % 10 == 0)
+                        {
+                            await userManager.AddToRoleAsync(user, RolesName.Staff);
+                            _uow.StaffInfo.Add(new StaffInfo
+                            {
+                                StaffInfo__AccountId = user.Id,
+                                StaffInfo__Avatar = HandleString.DefaultImage,
+                                StaffInfo__FirstName = "Staff",
+                                StaffInfo__LastName = "Account" + i,
+                                StaffInfo__Phone = "01234567" + (i < 10 ? "0" + i : i.ToString())
 
-               var result= await userManager.CreateAsync(user, "User@123"); // Mật khẩu mặc định
-                if(result.Succeeded){
-                    if(i%10==0){
-                        await userManager.AddToRoleAsync(user,"Staff");
-                        _uow.StaffInfo.Add(new StaffInfo{
-                            StaffInfo__AccountId=user.Id,
-                            StaffInfo__Avatar=HandleString.DefaultImage,
-                            StaffInfo__FirstName="Staff",
-                            StaffInfo__LastName="Account"+i,
-                            StaffInfo__Phone="01234567"+ (i<10?"0"+i:i.ToString())
-                            
-                        });
-                    }
-                    else{
-                        await userManager.AddToRoleAsync(user,"Customer");
-                         _uow.CustomerInfo.Add(new CustomerInfo{
-                            CustomerInfo__SpendingPoint=0,
-                            CustomerInfo__TotalSpent=0,
-                            CustomerInfo__AccountId=user.Id,
-                            CustomerInfo__FirstName="Customer",
-                            CustomerInfo__LastName="Account"+i,
-                            CustomerInfo__Phone="01234567"+ (i<10?"0"+i:i.ToString()),
-                            CustomerInfo__Avatar=HandleString.DefaultImage
-                        });
+                            });
                         }
+                        else
+                        {
+                            await userManager.AddToRoleAsync(user, "Customer");
+                            _uow.CustomerInfo.Add(new CustomerInfo
+                            {
+                                CustomerInfo__SpendingPoint = 0,
+                                CustomerInfo__TotalSpent = 0,
+                                CustomerInfo__AccountId = user.Id,
+                                CustomerInfo__FirstName = "Customer",
+                                CustomerInfo__LastName = "Account" + i,
+                                CustomerInfo__Phone = "01234567" + (i < 10 ? "0" + i : i.ToString()),
+                                CustomerInfo__Avatar = HandleString.DefaultImage
+                            });
+                        }
+                    }
                 }
-            }
 
-        }
+            }
     }
 
 }

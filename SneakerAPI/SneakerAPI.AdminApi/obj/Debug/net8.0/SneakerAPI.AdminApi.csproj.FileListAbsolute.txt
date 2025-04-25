@@ -394,3 +394,9 @@ D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\Google.Apis.Core.dll
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\System.Management.dll
 D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Management.dll
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\.env
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\Admin\web.config
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\Admin\appsettings.Development.json
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\Admin\appsettings.json
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\Admin\SneakerAPI.AdminApi.deps.json
+D:\Download\FinalProject\Sneaker\SneakerAPI\SneakerAPI.AdminApi\bin\Debug\net8.0\Admin\SneakerAPI.AdminApi.runtimeconfig.json

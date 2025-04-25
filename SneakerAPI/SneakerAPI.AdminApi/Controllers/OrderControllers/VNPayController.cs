@@ -1,54 +1,73 @@
 using Microsoft.AspNetCore.Mvc;
-using SneakerAPI.AdminApi.Controllers;
+using SneakerAPI.Api.Controllers;
+using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces;
-using SneakerAPI.Core.Models.Vnpay;
+
+using Microsoft.Extensions.Logging;
 using SneakerAPI.Core.Utilities;
+using SneakerAPI.Core.Models.Vnpay;
 using SneakerAPI.Core.VnpayEnums;
+using SneakerAPI.AdminApi.Controllers;
 
-
-[Route("api/Vnpay")]
+[Route("api/payment")]
+[ApiController]
+// [ApiExplorerSettings(IgnoreApi =true)]
 public class VnpayPayment : BaseController
 {
-
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _uow;
+    private readonly ILogger<VnpayPayment> _logger;
 
-    public VnpayPayment(IVnpay vnpay, IConfiguration configuration,IUnitOfWork uow):base(uow)
+    public VnpayPayment( IConfiguration configuration, IUnitOfWork uow, ILogger<VnpayPayment> logger) : base(uow)
     {
         _configuration = configuration;
         _uow = uow;
-        _uow.Vnpay.Initialize(_configuration["Vnpay:TmnCode"], _configuration["Vnpay:HashSecret"], _configuration["Vnpay:BaseUrl"], _configuration["Vnpay:ReturnUrl"]);
+        _logger = logger;
+
+        _uow.Vnpay.Initialize(
+            _configuration["Vnpay:TmnCode"],
+            _configuration["Vnpay:HashSecret"],
+            _configuration["Vnpay:BaseUrl"],
+            _configuration["Vnpay:ReturnUrl"]
+        );
     }
+
     [HttpGet("create-payment-url")]
-    public ActionResult<string> CreatePaymentUrl(double moneyToPay, string description)
+    public ActionResult<string> CreatePaymentUrl(double moneyToPay, long orderPayment,string command, string description)
     {
         try
         {
-            var ipAddress = NetworkHelper.GetIpAddress(HttpContext); // Lấy địa chỉ IP của thiết bị thực hiện giao dịch
+            if (moneyToPay <= 0)
+                return BadRequest("Invalid payment amount.");
+
+            if (orderPayment <= 0)
+                return BadRequest("Invalid order ID.");
+
+            var ipAddress = NetworkHelper.GetIpAddress(HttpContext);
 
             var request = new PaymentRequest
             {
-                PaymentId = DateTime.Now.Ticks,
+                PaymentId = orderPayment,
                 Money = moneyToPay,
                 Description = description,
                 IpAddress = ipAddress,
-                BankCode = BankCode.ANY, // Tùy chọn. Mặc định là tất cả phương thức giao dịch
-                CreatedDate = DateTime.Now, // Tùy chọn. Mặc định là thời điểm hiện tại
-                Currency = Currency.VND, // Tùy chọn. Mặc định là VND (Việt Nam đồng)
-                Language = DisplayLanguage.Vietnamese // Tùy chọn. Mặc định là tiếng Việt
+                Command=command,
+                BankCode = BankCode.ANY,
+                CreatedDate = DateTime.Now,
+                Currency = Currency.VND,
+                Language = DisplayLanguage.Vietnamese
             };
 
             var paymentUrl = _uow.Vnpay.GetPaymentUrl(request);
-
+           
             return Created(paymentUrl, paymentUrl);
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogError(ex, "Error creating payment URL.");
+            return StatusCode(500, "Internal server error.");
         }
     }
-    // /IPN URL (backend) để thông báo trạng thái giao dịch.
-    // Hệ thống backend nhận thông báo từ VNPAY thông qua IPN URL.
 
     [HttpGet("ipn")]
     public IActionResult IpnAction()
@@ -59,16 +78,23 @@ public class VnpayPayment : BaseController
             {
                 var paymentResult = _uow.Vnpay.GetPaymentResult(Request.Query);
                 if (paymentResult.IsSuccess)
-                {
+                {   
+                    if(paymentResult.Command==CommandType.Refund.ToString().ToLower())
+                    {
+                          var orderRefund=_uow.Order.FirstOrDefault(x=>x.Order__PaymentCode==paymentResult.PaymentId);
+                            orderRefund.Order__PaymentStatus=(int)PaymentStatus.Refunded;
+                            var refundResult=_uow.Order.Update(orderRefund);
+                            return Ok(new {refundResult, message="Order refunded"});
+                    }
                     // Thực hiện hành động nếu thanh toán thành công tại đây. Ví dụ: Cập nhật trạng thái đơn hàng trong cơ sở dữ liệu.
-                    var order=_uow.Order.FirstOrDefault(x=>x.Order__PaymentCode==paymentResult.PaymentId);
-                    order.Order__Status=(int)OrderStatus.Completed;
-                    _uow.Order.Update(order);
-                    return Ok("Payment successful");
+                    var orderPay=_uow.Order.FirstOrDefault(x=>x.Order__PaymentCode==paymentResult.PaymentId);
+                    orderPay.Order__PaymentStatus=(int)PaymentStatus.Paid;
+                    var resultPay=_uow.Order.Update(orderPay);
+                    return Ok(new {resultPay,message="Order payment successfully"});
                 }
 
                 // Thực hiện hành động nếu thanh toán thất bại tại đây. Ví dụ: Hủy đơn hàng.
-                return BadRequest("Payment failed");
+                return BadRequest("Thanh toán thất bại");
             }
             catch (Exception ex)
             {
@@ -78,33 +104,25 @@ public class VnpayPayment : BaseController
 
         return NotFound("Không tìm thấy thông tin thanh toán.");
     }
-    //Callback URL (frontend) để điều hướng người dùng quay lại trang web.
-    //Khi người dùng quay lại trang web qua Callback URL, hệ thống kiểm 
-    // tra trạng thái giao dịch dựa trên thông tin VNPAY gửi kèm.
-    // Hiển thị kết quả giao dịch (thành công/thất bại/lỗi) cho người dùng
     [HttpGet("callback")]
     public ActionResult<string> Callback()
     {
-        if (Request.QueryString.HasValue)
+        if (!Request.QueryString.HasValue)
+            return BadRequest("Invalid payment information.");
+
+        try
         {
-            try
-            {
-                var paymentResult = _uow.Vnpay.GetPaymentResult(Request.Query);
-                var resultDescription = $"{paymentResult.PaymentResponse.Description}. {paymentResult.TransactionStatus.Description}.";
+            var paymentResult = _uow.Vnpay.GetPaymentResult(Request.Query);
+            _logger.LogInformation("Callback received: {@paymentResult}", paymentResult);
 
-                if (paymentResult.IsSuccess)
-                {
-                    return Ok(paymentResult);
-                }
+            var resultDescription = $"{paymentResult.PaymentResponse.Description}. {paymentResult.TransactionStatus.Description}.";
 
-                return BadRequest(resultDescription);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return paymentResult.IsSuccess ? Ok(paymentResult) : BadRequest(resultDescription);
         }
-
-        return NotFound("Information of payment is not valid.");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing callback.");
+            return StatusCode(500, "Internal server error.");
+        }
     }
 }

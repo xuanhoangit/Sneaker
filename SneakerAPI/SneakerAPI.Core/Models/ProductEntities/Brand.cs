@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
 
 namespace SneakerAPI.Core.Models.ProductEntities
 {
@@ -15,6 +16,8 @@ namespace SneakerAPI.Core.Models.ProductEntities
         [Required]
         public string? Brand__Logo { get; set; }
         public bool Brand__IsActive { get; set; }
-        public virtual List<Product>? Products {get;set;}
+        [NotMapped]
+        public IFormFile? FileLogo { get; set; }
+        public virtual List<Product>? Products { get; set; }
     }
 }

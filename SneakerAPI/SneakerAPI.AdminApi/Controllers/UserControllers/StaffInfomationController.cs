@@ -11,6 +11,7 @@ using SneakerAPI.Core.Models.UserEntities;
 namespace SneakerAPI.Api.Controllers.UserControllers
 {   
     [Route("api/information")]
+    [Authorize(Roles = $"{RolesName.Admin},{RolesName.ProductManager},{RolesName.SaleManager},{RolesName.Staff}")]
     [ApiController]
        public class StaffInfomationController : BaseController
     {
@@ -44,7 +45,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             }
         }
         [HttpGet("my-profile")]
-        [Authorize(Roles = $"{RolesName.Admin},{RolesName.Manager},{RolesName.Staff}")]
+        
         public IActionResult GetStaffInfomation()
         {
             try
@@ -65,7 +66,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             }
         }
         [HttpPatch("profile-update")]
-        public async Task<IActionResult> UpdateStaffInfomation(StaffInfoDTO staffInfoDTO)
+        public async Task<IActionResult> UpdateStaffInfomation([FromBody]StaffInfoDTO staffInfoDTO)
         {
            try
            {    

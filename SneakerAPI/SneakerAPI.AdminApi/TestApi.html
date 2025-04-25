@@ -1,27 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
 </head>
 <body>
-<img id="img" src="https://d2j6dbq0eux0bg.cloudfront.net/images/66610504/2636936256.jpg" alt="" srcset="">    <script>
-        fetch("http://localhost:4000/api/users/profile")
-  .then(response => {
+  <button onclick="GetCurrenCustomerUser()">Cliec</button>
+  <script>
+     function GetCurrenCustomerUser() {
+  // console.log(token)
+  fetch("https://localhost:3000/api/brands/haha", {
+    method: "GET",
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMyIsImVtYWlsIjoidXNlcjEwQGdtYWlsLmNvbSIsImp0aSI6IjU4YmM2NDc1LTlkOWQtNGYwOS1iMGJmLTgxYjRhZDQ1ZDcxZCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlN0YWZmIiwiZXhwIjoxNzQ1Mzk0ODg2LCJpc3MiOiJodHRwczovL2xvY2FsaG9zdDozMDAwIiwiYXVkIjoiaHR0cDovLzEyNy4wLjAuMTo1MDAwIn0.lgXCUdZ14-CuoDs6T6OoCypdH_UAMXKgQjOYeg-Fy0c`
+  }
+})
+.then(response => {
     if (!response.ok) {
-      throw new Error("Lỗi khi gọi API: " + response.status);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
   })
   .then(data => {
-    document.getElementById("img").src=data.customerInfo__Avatar;
-    console.log("Dữ liệu nhận được:", data);
+    console.log('Success:', data);
   })
   .catch(error => {
-    console.error("Lỗi:", error);
+    console.error('Error:', error);
   });
 
-    </script>
+ }
+  </script>
 </body>
 </html>

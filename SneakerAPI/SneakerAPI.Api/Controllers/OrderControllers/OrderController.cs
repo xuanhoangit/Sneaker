@@ -12,7 +12,7 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
 {   
     [ApiController]
     [Route("api/orders")]
-    [ApiExplorerSettings(IgnoreApi =true)]
+    // [ApiExplorerSettings(IgnoreApi =true)]
     [Authorize(Roles = RolesName.Customer)]
     //pass 
     public class OrderController : BaseController

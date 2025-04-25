@@ -9,7 +9,7 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
 {   
     [ApiController]
     [Route("api/cart-items")]
-    [ApiExplorerSettings(IgnoreApi =true)]
+    // [ApiExplorerSettings(IgnoreApi =true)]
     [Authorize(Roles=RolesName.Customer)]//pass
     public class CartItemController : BaseController
     {
@@ -43,18 +43,23 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
         [HttpPost("add")]
         public IActionResult AddItem([FromBody] AddCartDTO cartDTO)
         {
+                    System.Console.WriteLine("hahaadddddddddddddddddddddh");
             try
             {
                 var currentAccount = CurrentUser() as CurrentUser;
                 if (currentAccount == null)
                     return Unauthorized("User not authenticated.");
-
                 if (cartDTO == null)
                     return BadRequest("Invalid input data.");
 
+                var pcs = _uow.ProductColorSize.FirstOrDefault(x => x.ProductColorSize__ProductColorId == cartDTO.ProductColor__Id && x.ProductColorSize__SizeId == cartDTO.Size__Id).ProductColorSize__Id;
+                if (pcs == 0)
+                {
+                    return BadRequest("Item is not available");
+                }
                 var existingItem = _uow.CartItem.FirstOrDefault(x =>
                     x.CartItem__CreatedByAccountId == currentAccount.AccountId &&
-                    x.CartItem__ProductColorSizeId == cartDTO.CartItem__ProductColorSizeId);
+                    x.CartItem__ProductColorSizeId == pcs);
 
                 if (existingItem != null)
                 {
@@ -64,9 +69,14 @@ namespace SneakerAPI.Api.Controllers.OrderControllers
                 }
                 else
                 {
-                    var newItem = _mapper.Map<CartItem>(cartDTO);
-                    newItem.CartItem__CreatedByAccountId = currentAccount.AccountId;
-
+                    var newItem = new CartItem
+                    {
+                        CartItem__CreatedByAccountId = currentAccount.AccountId,
+                        CartItem__ProductColorSizeId = pcs,
+                        CartItem__Quantity = cartDTO.CartItem__Quantity,
+                        
+                     }
+                    ;
                     if (_uow.CartItem.Add(newItem))
                         return Ok("Item added successfully.");
                 }

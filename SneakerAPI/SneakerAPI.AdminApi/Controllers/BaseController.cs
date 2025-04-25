@@ -13,38 +13,38 @@ namespace SneakerAPI.AdminApi.Controllers
         {
             uow = _uow;
         }
-        protected object CurrentUser()
-{   
-    try
-    {
-        
-    var account = HttpContext.User;
 
-    if (account == null || !account.Identity.IsAuthenticated)
-    {
-        return Unauthorized("User is not authenticated.");
-    }
+       protected object CurrentUser()
+        {   
+            try
+            {
+                
+            var account = HttpContext.User;
 
-    var sub = account.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var email=account.FindFirst(ClaimTypes.Email)?.Value;
-    var roles = account.Claims
-        .Where(c => c.Type == ClaimTypes.Role || c.Type.EndsWith("role"))
-        .Select(c => c.Value)
-        .ToList();
-    return new CurrentUser
-    {
-        // AcccountId = accountID,
-        AccountId = int.Parse(sub),
-        Email = email,
-        Roles = roles,
-    };
-    }
-   
-     catch (System.Exception e)
-    {
+            if (account == null || !account.Identity.IsAuthenticated)
+            {
+                return null;
+            }
+
+            var sub = account.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email=account.FindFirst(ClaimTypes.Email)?.Value;
+            var roles = account.Claims
+                .Where(c => c.Type == ClaimTypes.Role || c.Type.EndsWith("role"))
+                .Select(c => c.Value)
+                .ToList();
+            return new CurrentUser
+            {
+                AccountId = int.Parse(sub),
+                Email = email,
+                Roles = roles,
+            };
+            }
         
-        return BadRequest(e);
-    }
-}
+            catch (System.Exception)
+            {
+                
+                throw;
+            }
+        }
     }
 }

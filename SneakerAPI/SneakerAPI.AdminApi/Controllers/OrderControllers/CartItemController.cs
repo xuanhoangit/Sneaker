@@ -1,13 +1,15 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces;
 using SneakerAPI.Core.Models.OrderEntities;
 
 namespace SneakerAPI.AdminApi.Controllers.OrderControllers
-{   
+{
     [ApiController]
     [Route("api/cart-items")]
+    [Authorize(Roles=RolesName.Staff)]
     public class CartItemController : BaseController
     {
         private readonly IUnitOfWork _uow;
@@ -43,14 +45,21 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
             try
             {
                 var currentAccount = CurrentUser() as CurrentUser;
+                System.Console.WriteLine(currentAccount.AccountId);
                 if (currentAccount == null)
                     return Unauthorized("User not authenticated.");
                 if (cartDTO == null)
                     return BadRequest("Invalid input data.");
                 // 5 Replace with currentAccount.AccountId
+                var pcs = _uow.ProductColorSize.FirstOrDefault(x => x.ProductColorSize__ProductColorId == cartDTO.ProductColor__Id && x.ProductColorSize__SizeId == cartDTO.Size__Id).ProductColorSize__Id;
+                if (pcs == 0)
+                {
+                    return BadRequest("Item is not available");
+                }
                 var existingItem = _uow.CartItem.FirstOrDefault(x =>
                     x.CartItem__CreatedByAccountId == currentAccount.AccountId &&
-                    x.CartItem__ProductColorSizeId == cartDTO.CartItem__ProductColorSizeId);
+                    x.CartItem__ProductColorSizeId == pcs);
+
 
                 if (existingItem != null)
                 {
@@ -60,8 +69,13 @@ namespace SneakerAPI.AdminApi.Controllers.OrderControllers
                 }
                 else
                 {
-                    var newItem = _mapper.Map<CartItem>(cartDTO);
-                    newItem.CartItem__CreatedByAccountId = currentAccount.AccountId; // Replace with currentAccount.AccountId
+                    var newItem = new CartItem
+                    {
+                        CartItem__CreatedByAccountId = currentAccount.AccountId,
+                        CartItem__ProductColorSizeId = pcs,
+                        CartItem__Quantity = cartDTO.CartItem__Quantity,
+
+                    };// Replace with currentAccount.AccountId
 
                     if (_uow.CartItem.Add(newItem))
                         return Ok("Item added successfully.");

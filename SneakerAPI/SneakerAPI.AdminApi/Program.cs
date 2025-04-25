@@ -15,6 +15,7 @@ using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces.UserInterfaces;
 using SneakerAPI.Infrastructure.Repositories.UserRepositories;
 using VNPAY.NET;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 
 
@@ -29,13 +30,16 @@ builder.Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowHostSpecifiOrigins,
-                      policy  =>
+                      policy =>
                       {
-                          policy.AllowAnyMethod()
-                                                                            .AllowAnyHeader()
-                                                                            .AllowCredentials();
+                          policy
+                            .WithOrigins(Environment.GetEnvironmentVariable("OriginHost"),Environment.GetEnvironmentVariable("OrginHost1"))
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials();
                       });
 });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -74,14 +78,20 @@ config["Vnpay:BaseUrl"]=Environment.GetEnvironmentVariable("BaseUrl");
 config["Vnpay:ReturnUrl"]=Environment.GetEnvironmentVariable("ReturnUrl");
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 // Cấu hình Authentication với JWT
-builder.Services.AddAuthentication()
+builder.Services.AddAuthentication(
+    options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}
+)  
 .AddJwtBearer(options =>
 {   
     options.TokenValidationParameters = new TokenValidationParameters
     {
          ValidateIssuer = true,
           // Cấu hình RoleClaimType đúng với token của bạn
-            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
+         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
          ValidateAudience = true,
          ValidateLifetime = true,
          ValidateIssuerSigningKey = true,
@@ -101,37 +111,37 @@ builder.Services.AddDistributedMemoryCache(); // Cần thiết cho Session
 var app = builder.Build();
 // Thực hiện seed Role và tài khoản Admin
 
-// using (var scope = app.Services.CreateScope())
-// {
-//     var services = scope.ServiceProvider;
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
 
-//     try
-//     {
-//         var uow = services.GetRequiredService<IUnitOfWork>();
-//         await SeedRoleAdmin.InitializeAccount(services, uow);
-//         await SeedRoleAdmin.InitBrand(uow);
-//         SeedRoleAdmin.InitColor(uow);
-//         SeedRoleAdmin.InitCategory(uow);
-//         SeedRoleAdmin.InitProductCategory(uow);
-//         SeedRoleAdmin.InitSize(uow);
-//         SeedRoleAdmin.InitProductColor(uow);
-//         SeedRoleAdmin.InitProductColorSize(uow);
-//         // SeedRoleAdmin.UpdatePrice(uow);
-//         // SeedRoleAdmin.UpdateDateProduct(uow);
-//         // SeedRoleAdmin.UpdatePhoneNumber(uow);
-//         // for (int i = 0; i < 10; i++)
-//         // {
+    try
+    {
+        var uow = services.GetRequiredService<IUnitOfWork>();
+        await SeedRoleAdmin.InitializeAccount(services, uow);
+        await SeedRoleAdmin.InitBrand(uow);
+        SeedRoleAdmin.InitColor(uow);
+        SeedRoleAdmin.InitCategory(uow);
+        SeedRoleAdmin.InitProductCategory(uow);
+        SeedRoleAdmin.InitSize(uow);
+        SeedRoleAdmin.InitProductColor(uow);
+        SeedRoleAdmin.InitProductColorSize(uow);
+        // SeedRoleAdmin.UpdatePrice(uow);
+        // SeedRoleAdmin.UpdateDateProduct(uow);
+        // SeedRoleAdmin.UpdatePhoneNumber(uow);
+        // for (int i = 0; i < 20; i++)
+        // {
 
-//         // SeedRoleAdmin.InitCart(uow);
-//         // SeedRoleAdmin.InitOrder(uow);
-//         // }
-//     }
-//     catch (Exception ex)
-//     {
-//         // Log lỗi nếu cần
-//         Console.WriteLine("hahaha" + ex.Message);
-//     }
-// }
+        // SeedRoleAdmin.InitCart(uow);
+        // SeedRoleAdmin.InitOrder(uow);
+        // }
+    }
+    catch (Exception ex)
+    {
+        // Log lỗi nếu cần
+        Console.WriteLine("hahaha" + ex.Message);
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

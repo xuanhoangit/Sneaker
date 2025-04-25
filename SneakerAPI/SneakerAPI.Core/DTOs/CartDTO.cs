@@ -3,9 +3,10 @@ using SneakerAPI.Core.Models.ProductEntities;
 namespace SneakerAPI.Core.DTOs;
 public class AddCartDTO
 {
-        public int CartItem__Id { get; set; }
+        // public int CartItem__Id { get; set; }
         public int CartItem__Quantity {get;set;}
-        public int CartItem__ProductColorSizeId { get; set; }//FK
+        public int ProductColor__Id { get; set; }//FK
+        public int Size__Id { get; set; }//FK
 
 }
 

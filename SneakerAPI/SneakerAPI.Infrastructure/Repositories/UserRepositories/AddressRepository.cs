@@ -10,12 +10,26 @@ namespace SneakerAPI.Infrastructure.Repositories.UserRepositories
         public AddressRepository(SneakerAPIDbContext context) : base(context)
         {
         }
-        public List<int> GetRandomAddressIdByAccountId(int accountId){
-            var query=from address in _context.Addresses join ci in _context.CustomerInfos
-            on address.Address__CustomerInfo equals ci.CustomerInfo__Id join ac in _context.Users
+        public int GetAddressStoreAt()
+        {   
+            var query = from address in _context.Addresses
+                        join ci in _context.CustomerInfos
+            on address.Address__CustomerInfo equals ci.CustomerInfo__Id
+                        join ac in _context.Users
             on ci.CustomerInfo__AccountId equals ac.Id
-            where accountId==ac.Id
-            select address.Address__Id;
+                        where "admin@gmail.com" == ac.Email
+                        select address.Address__Id;
+            return query.FirstOrDefault();
+        }
+        public List<int> GetRandomAddressIdByAccountId(int accountId)
+        {
+            var query = from address in _context.Addresses
+                        join ci in _context.CustomerInfos
+            on address.Address__CustomerInfo equals ci.CustomerInfo__Id
+                        join ac in _context.Users
+            on ci.CustomerInfo__AccountId equals ac.Id
+                        where accountId == ac.Id
+                        select address.Address__Id;
             return query.ToList();
         }
 

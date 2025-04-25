@@ -1,5 +1,6 @@
 
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -11,6 +12,7 @@ public class TestController : ControllerBase
 
     }
     [HttpGet]
+    [Authorize]
     public IActionResult TEst()
     {
         return Ok("HAHAHAHAHA");

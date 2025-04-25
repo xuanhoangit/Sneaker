@@ -35,7 +35,7 @@ function getRandomProvince() {
   return Math.floor(Math.random() * 63) + 1;
 }
 function getRandomUser() {
-  return Math.floor(Math.random() * 100) + 1;
+  return Math.floor(Math.random() * 100) + 2;
 }
 function getRandomDistric(lenth) {
   return Math.floor(Math.random() * lenth) + 1;
@@ -77,7 +77,7 @@ async function fetchWards(districtId) {
     const data = await response.json();
 
     if (response.ok && data.code === 200) {
-      console.log('Danh sách phường:', data.data);
+      // console.log('Danh sách phường:', data.data);
       return data.data;
     } else {
       console.error('Lỗi từ API:', data.message || data);
@@ -101,7 +101,7 @@ function getProvince() {
 })
 .then(response => response.json())
 .then(data => {
-  console.log("Danh sách tỉnh/thành:", data);
+  // console.log("Danh sách tỉnh/thành:", data);
   for(let i=1;i<1000;i++){
 
     const address= {
@@ -122,7 +122,7 @@ function getProvince() {
         .then(data => {
             const randomDictric=getRandomDistric(data.data.length)
             address.Address__DistrictId=data.data[randomDictric].DistrictID
-            console.log(data.data[randomDictric])
+            // console.log(data.data[randomDictric])
             address.Address__AddressDetail= data.data[randomDictric].DistrictName+", "+address.Address__AddressDetail
             const ward=fetchWards(data.data[randomDictric].DistrictID).then(wards => {
             // Duyệt qua danh sách phường nếu cần

@@ -5,12 +5,13 @@ using SneakerAPI.Core.DTOs;
 using SneakerAPI.Core.Interfaces;
 using SneakerAPI.Core.Models.Filters;
 using SneakerAPI.Core.Models.ProductEntities;
+using StackExchange.Redis;
 
 namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
 {   
     [ApiController]
     [Route("api/products")]
-    [Authorize(Roles=$"{RolesName.Staff},{RolesName.Manager},{RolesName.Admin}")]
+    [Authorize(Roles=$"{RolesName.Staff},{RolesName.ProductManager}")]
     public class GetProductDataController :BaseController
     {
         private readonly IUnitOfWork _uow;
@@ -20,6 +21,7 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
         {
             _uow = uow;
         }
+        [Authorize(Roles=RolesName.ProductManager)]
         [HttpGet("{status}/page/{page}")]
         public IActionResult GetProductsByStatus(int status,int page=1){
             try
@@ -98,7 +100,7 @@ namespace SneakerAPI.AdminApi.Controllers.ActionProductControllers
 
     [ApiController]
     [Route("api/products")]
-    [Authorize(Roles=RolesName.Manager)]
+    [Authorize(Roles=RolesName.ProductManager)]
     public class ActionProductController : BaseController
     {
         private readonly IUnitOfWork _uow;

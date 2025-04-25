@@ -11,7 +11,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
     [Route("api/users")]
     [ApiController]
     //pass
-    [ApiExplorerSettings(IgnoreApi =true)]
+    // [ApiExplorerSettings(IgnoreApi =true)]
     [Authorize(Roles = RolesName.Customer)]
     public class UserInformationController : BaseController
     {

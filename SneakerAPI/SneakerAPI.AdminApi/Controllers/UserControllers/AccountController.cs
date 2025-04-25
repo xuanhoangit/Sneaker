@@ -1,6 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -12,280 +10,13 @@ using SneakerAPI.Core.Interfaces;
 using SneakerAPI.Core.Interfaces.UserInterfaces;
 using SneakerAPI.Core.Libraries;
 using SneakerAPI.Core.Models;
-using SneakerAPI.Core.Models.UserEntities;
+
 
 
 namespace SneakerAPI.AdminApi.Controllers.UserController
 {   
     [ApiController]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [Route("api/managers")]
-    [Authorize(Roles=RolesName.Manager)]
-    public class ManagerController : BaseController {
-        private readonly UserManager<IdentityAccount> _accountManager;
-        private readonly IEmailSender _emailSender;
-        private readonly IUnitOfWork _uow;
-
-        public ManagerController(UserManager<IdentityAccount> accountManager,
-                                 IEmailSender emailSender,
-                                 IUnitOfWork uow):base(uow)
-        {
-            _accountManager = accountManager;
-            _emailSender = emailSender;
-            _uow = uow;
-        }
-        private bool AutoCreateInfo(int account_id){
-             //Auto tạo bảng info
-                    var staffInfo=new StaffInfo{
-                        StaffInfo__AccountId=account_id,
-                        StaffInfo__Avatar=HandleString.DefaultImage
-                    };
-                    return _uow.StaffInfo.Add(staffInfo);
-        }
-        //Đã test
-        [HttpGet("staffs")]
-        public async Task<IActionResult> GetStaffAccount(){
-            try
-            {
-                var accounts= await _accountManager.GetUsersInRoleAsync(RolesName.Staff);
-                if(accounts==null)
-                    return BadRequest("Have not an account!");
-                return Ok(accounts);
-            }
-            catch (System.Exception)
-            {
-                
-                return BadRequest("An error has occurred while getting account");
-            }
-            
-        }
-        //Đã test
-        [HttpPost("appoint-staff")]
-        public async Task<IActionResult> AppointStaff(EmailUser model )
-        {
-            try
-            {
-                
-            if(string.IsNullOrEmpty(model.Email))
-            {
-                return BadRequest("Email is required.");
-            }
-            var account=await _accountManager.FindByEmailAsync(model.Email);
-            if(account!=null)
-            {   
-                var isInRoleStaff=await _accountManager.IsInRoleAsync(account,RolesName.Staff);
-                if(isInRoleStaff)
-                    return BadRequest("Account has access");
-                var rs=await _accountManager.AddToRoleAsync(account,RolesName.Staff);
-                if(rs.Succeeded)
-                {
-                    //Auto tạo bảng 
-                    if(null==_uow.StaffInfo.FirstOrDefault(x=>x.StaffInfo__AccountId==account.Id))
-                    AutoCreateInfo(account.Id);
-                    await _emailSender.SendEmailAsync(account.Email,"Appointment employee",EmailTemplateHtml.RenderEmailNotificationBody(account.UserName,"","You are appointed as a sales person of SLS."));
-                }
-
-                return Ok("Granted permission to staff successfully");
-            }
-           
-            return BadRequest(new {message="Account does not exist contact your administrator to grant access"}); 
-             }
-            catch (System.Exception)
-            {
-                
-                return BadRequest(new {message="An error has occurred white appointed"});
-            }
-        }
-    }
-    //--------------------------------------------------------------------------------------------------------------
-    [ApiController]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [Route("api/admins")]
-
-    [Authorize(Roles=RolesName.Admin)]
-    public class AdminController : ControllerBase
-    {
-        private readonly UserManager<IdentityAccount> _accountManager;
-        private readonly IEmailSender _emailSender;
-        private readonly IUnitOfWork _uow;
-        private readonly int unitInAPage=20;
-        public AdminController(UserManager<IdentityAccount> accountManager,
-                                 IEmailSender emailSender,
-                                 IUnitOfWork uow)
-        {
-            _accountManager = accountManager;
-            _emailSender = emailSender;
-           _uow = uow;
-        }
-
-        [HttpPut("role-envoke")]
-        public async Task<IActionResult> EnvokeRole([FromBody]EmailUser model){
-            try
-            {
- 
-            var account= await _accountManager.FindByEmailAsync(model.Email);
-            if(account==null)
-                return BadRequest("Account is not exist");
-            var isInRole= await _accountManager.IsInRoleAsync(account,RolesName.Manager);
-            if(isInRole){
-            var result=await _accountManager.RemoveFromRoleAsync(account,RolesName.Manager);
-                if(result.Succeeded){
-                await _emailSender.SendEmailAsync(account.Email,"Terminate the contract",EmailTemplateHtml.RenderEmailNotificationBody(account.UserName,"","You are no longer an SLS salesperson."));
-                return Ok(new {result.Succeeded,Message="Manager rights revoked"});
-                }
-            }
-            return BadRequest("Account is not in role Manager");
-                           
-            }
-            catch (System.Exception e)
-            {
-                
-                return BadRequest(e);
-            }
-        }
-        [HttpPut("unlock-account")]
-        public async Task<IActionResult> UnlockAccount([FromBody]EmailUser model)
-        {
-            try
-            {
-                var account =await  _accountManager.FindByEmailAsync(model.Email);
-                if (account == null)
-                    return BadRequest("Account does not exist.");
-
-                account.LockoutEnabled = false;
-                account.LockoutEnd = null;
-                await _accountManager.UpdateAsync(account);
-                return Ok("Account has been unlocked.");
-            }
-            catch (System.Exception)
-            {
-                
-                return BadRequest("An error has occurred while blocking account");
-            }
-        }
-       
-        [HttpPut("block-account")]
-    
-        public async Task<IActionResult> BlockAccount([FromBody]EmailUser model)
-        {
-            try
-            {
-                var account =await  _accountManager.FindByEmailAsync(model.Email);
-                if (account == null)
-                    return BadRequest("Account does not exist.");
-
-                account.LockoutEnabled = true;
-                account.LockoutEnd = DateTimeOffset.MaxValue;
-                await _accountManager.UpdateAsync(account);
-                return Ok("Account has been blocked.");
-            }
-            catch (System.Exception)
-            {
-                
-                return BadRequest("An error has occurred while blocking account");
-            }
-        }
-       
- 
-        [HttpGet("list-accounts/roles/{role}/page/{page:int?}")]
-        public async Task<IActionResult> GetAccountsByRole(string role,int page){
-            try
-            {
-                var accounts= (await _accountManager.GetUsersInRoleAsync(role)).Skip(unitInAPage*page).Take(unitInAPage);
-                if(accounts==null)
-                    return BadRequest("Have not an account!");
-                return Ok(accounts);
-            }
-            catch (System.Exception)
-            {
-                
-                return BadRequest("An error has occurred while getting account");
-            }
-            
-        }
-
-        [HttpGet("list-accounts")]
-        public async Task<IActionResult> GetAccountByEmail([FromBody] EmailUser model){
-            try
-            {
-                var account=await  _accountManager.FindByEmailAsync(model.Email);
-                if(account==null)
-                    return BadRequest("Account not found");
-                return Ok(account);
-            }
-            catch (System.Exception)
-            {
-                
-                return BadRequest("An error has occurred while getting account");
-            }
-            
-        }
-        [HttpGet("list-accounts/{accountId:int?}")]
-        public async Task<IActionResult> GetAccountById(int accountId){
-            try
-            {
-                var account=await  _accountManager.FindByIdAsync(accountId.ToString());
-                if(account==null)
-                    return NotFound("Account not found");
-                return Ok(account);
-            }
-            catch (System.Exception)
-            {
-                
-                return BadRequest("An error has occurred while getting account");
-            }
-            
-        }
-
-        private bool AutoCreateInfo(int account_id){
-                    var staffInfo=new StaffInfo{
-                    StaffInfo__AccountId=account_id,
-                    StaffInfo__Avatar=HandleString.DefaultImage
-                };
-                return _uow.StaffInfo.Add(staffInfo);
-        }
-        [HttpPost("appoint-manager")]
-        //Bổ nhiệm
-        public async Task<IActionResult> AppointManager([FromBody]EmailUser model)
-        {
-            try
-            {
-                
-            if(string.IsNullOrEmpty(model.Email))
-            {
-                return BadRequest("Email is required.");
-            }
-            var account=await _accountManager.FindByEmailAsync(model.Email);
-            if(account!=null)
-            {
-                var isInRole=await _accountManager.IsInRoleAsync(account,RolesName.Manager);
-                if(isInRole)
-                    return BadRequest("Account has access");
-                var rs=await _accountManager.AddToRoleAsync(account,RolesName.Manager);
-                if(rs.Succeeded)
-                {   
-                    if(null==_uow.StaffInfo.FirstOrDefault(x=>x.StaffInfo__AccountId==account.Id))
-                    AutoCreateInfo(account.Id);
-                    await _emailSender.SendEmailAsync(account.Email,"Appointment employee",EmailTemplateHtml.RenderEmailNotificationBody(account.UserName,"","You are appointed as a manager of SLS."));
-
-                }
-                return Ok("Granted permission to manager successfully");
-            }
-
-         
-            return BadRequest(new {message="Account does not exist contact administrator to grant access"});    
-             }
-            catch (System.Exception)
-            {
-                
-                return BadRequest(new {message="An error has occurred white appointed"});
-            }
-        }
-    }
-    [ApiController]
     [Route("api/accounts")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [Area("Dashboard")]
     public class AccountController : BaseController{
 
         private static Dictionary<string,string> _refreshtoken= new ();
@@ -309,6 +40,14 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
             _jwtService = jwtService;
             
         }
+
+        [Authorize(Roles = $"{RolesName.ProductManager},{RolesName.Admin},{RolesName.Staff},{RolesName.SaleManager}")]
+        [HttpGet("current-user")]
+        public IActionResult GetCurrentUser()
+        {
+            
+            return Ok((CurrentUser)CurrentUser());
+        } 
 
     [HttpPost("new-token")]
     public async Task<IActionResult> RefreshToken([FromBody] TokenResponse model)
@@ -493,9 +232,10 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
             if (!await _accountManager.IsEmailConfirmedAsync(account))
                 return Unauthorized("Please confirm email before logging in.");
 
-            var result = await _signInManager.PasswordSignInAsync(account, model.Password, false, false);
+            var result = await _signInManager.PasswordSignInAsync(account, model.Password, true, false);
             if (result.Succeeded)
-            {   
+            {  
+                System.Console.WriteLine("Success login"); 
                 var token = (TokenResponse)_jwtService.GenerateJwtToken(account,roles);
                 _refreshtoken[account.Email]=token.RefreshToken;
                 return Ok(token);
@@ -544,7 +284,7 @@ namespace SneakerAPI.AdminApi.Controllers.UserController
         }
 
         // Đặt lại mật khẩu
-        [Authorize(Roles=$"{RolesName.Admin},{RolesName.Manager},{RolesName.Staff}")]
+        [Authorize(Roles=$"{RolesName.Admin},{RolesName.SaleManager},{RolesName.ProductManager},{RolesName.Staff}")]
         [HttpPost("password-change")]
         public async Task<IActionResult> ChangePassword(ChangePasswordDto model)
         {

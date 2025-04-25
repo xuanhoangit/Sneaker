@@ -24,7 +24,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
     public required string Credential { get; set; }
 }
     [ApiController]
-    [ApiExplorerSettings(IgnoreApi = true)]
+    // [ApiExplorerSettings(IgnoreApi = true)]
     [Route("api/accounts")]
     public class AccountController : BaseController
     {   
@@ -95,7 +95,7 @@ namespace SneakerAPI.Api.Controllers.UserControllers
         }
         //past
         [Authorize(Roles = RolesName.Customer)]
-        [HttpPatch("password-set")]
+        [HttpPatch("password-set")]//setpasskhi password=""
         public async Task<IActionResult> SetPassword([FromBody]ChangePasswordDto model)
         {
             try
@@ -361,8 +361,8 @@ namespace SneakerAPI.Api.Controllers.UserControllers
             if(!roles.Contains(RolesName.Customer))
                 {
                 
-                if (_cache.TryGetValue(model.Email, out string storedOtp))
-                    return BadRequest("Please try again in a few minutes.");
+                // if (_cache.TryGetValue(model.Email, out string storedOtp))
+                //     return BadRequest("Please try again in a few minutes.");
 
                 var otpCode = HandleString.GenerateVerifyCode();
                 _cache.Set(model.Email, otpCode, TimeSpan.FromMinutes(5));
